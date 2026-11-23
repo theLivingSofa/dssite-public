@@ -14,9 +14,19 @@ Use a strong password that you don't use anywhere else, and please don't share y
 1. Click the words you want to change.
 2. Type in the box that opens on the left. The page updates as you type.
 3. Press **Save**.
-4. If a box lists possible mistakes, untick anything that's correct, such as a name. Then press **Fix it and save**, or **Save anyway**.
+4. If a box lists possible mistakes, untick anything that's correct, such as a name. Then press **Fix it and save**, **Edit and save** to correct it yourself, or **Save anyway**.
 
 The change appears on the live website in about two minutes.
+
+## Change a font
+
+1. Click the text. Under its box on the left, choose a **Font**.
+2. Press **Just this text**, then **Save**, to change only that text.
+3. Or press the second button, such as **All section headings**, to change every text of that kind. Check the preview, then press **Save for all section headings** or **Cancel**.
+
+The big name has its own setting and never changes with the others. Choose **Site default** to go back to the original font.
+
+**To add a new font:** open **11 Site settings and sharing**, go to **Uploaded fonts**, choose a WOFF2, TTF or OTF file, press **Upload font**, then **Save**. It appears in the Font menus in about two minutes, after you refresh the page. Only upload fonts you have the right to use.
 
 ## Change a photo
 

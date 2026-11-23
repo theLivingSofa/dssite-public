@@ -7,9 +7,10 @@
   },
   "scripts": {
     "images": "node scripts/images.mjs",
-    "dev": "npm run images && tinacms dev --noTelemetry -c \"next dev -p 3000\"",
-    "build": "npm run validate && npm run images && NODE_ENV=production tinacms build --noTelemetry --content=local --skip-cloud-checks -c \"next build\" && node scripts/finish-export.mjs",
-    "build:local": "npm run validate && npm run images && NODE_ENV=production tinacms build --noTelemetry --local --skip-cloud-checks -c \"next build\" && node scripts/finish-export.mjs",
+    "fonts": "node scripts/fonts.mjs",
+    "dev": "npm run images && npm run fonts && tinacms dev --noTelemetry -c \"next dev -p 3000\"",
+    "build": "npm run validate && npm run images && npm run fonts && NODE_ENV=production tinacms build --noTelemetry --content=local --skip-cloud-checks -c \"next build\" && node scripts/finish-export.mjs",
+    "build:local": "npm run validate && npm run images && npm run fonts && NODE_ENV=production tinacms build --noTelemetry --local --skip-cloud-checks -c \"next build\" && node scripts/finish-export.mjs",
     "preview": "npx --yes serve@14 out -l 4173",
     "validate": "node scripts/validate-content.mjs"
   },

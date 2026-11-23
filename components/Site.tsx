@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { DISCLAIMER, safeHref } from "../lib/content-rules.mjs";
+import { fontChoice } from "../lib/fonts.mjs";
 import { responsive } from "../lib/images";
 import type { SiteQuery } from "../tina/__generated__/types";
 
@@ -22,8 +23,12 @@ const GALLERY_SLOTS = [
   { slot: "g", sizes: "(min-width: 900px) 28vw, 100vw", target: 800 },
 ];
 
-const mark = (field: FieldFn, object: unknown, property: string, index?: number) =>
-  field(object as never, property, index);
+// Editor attributes for one piece of text, plus its own font if it has one.
+const mark = (field: FieldFn, object: unknown, property: string, index?: number) => {
+  const props = field(object as never, property, index);
+  const font = fontChoice((object as Record<string, unknown> | null | undefined)?.[`${property}Font`]);
+  return font ? { ...props, "data-font": font } : props;
+};
 
 const linkTo = (url?: string | null) => {
   const href: string | undefined = safeHref(url);

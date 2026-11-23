@@ -13,6 +13,7 @@ next-env.d.ts
 # Generated at build time
 public/admin/
 public/assets/generated/
+public/css/custom-fonts.css
 lib/images.generated.json
 tina/__generated__/
 

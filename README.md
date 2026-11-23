@@ -12,7 +12,7 @@ A one-page profile you can edit from the browser, without touching code.
 1. Open `https://your-site/admin` and log in.
 2. Click anything on the page. Its field opens in the left sidebar.
 3. Type. The preview changes as you type.
-4. Press **Save**. A free AI proofreader points out likely spelling or grammar mistakes. Choose **Fix it and save** or **Save anyway**.
+4. Press **Save**. A free AI proofreader points out likely spelling or grammar mistakes. Choose **Fix it and save**, **Edit and save** or **Save anyway**.
 
 Automatic checks run, and the change goes live about a minute or two later. If a save fails the checks, the live site stays as it was and the owner gets an email. Every change is kept in GitHub history, and [SECURITY.md](SECURITY.md) explains how to roll back.
 
@@ -56,6 +56,7 @@ In Cloudflare, open your Pages project, then **Custom domains > Set up a domain*
 | A link's address | Click the link, then edit **Link address** in the sidebar |
 | Add, remove or reorder items | Use the list in the sidebar (timeline, papers, roles and so on) |
 | Tab title, search text, sharing card | **11 Site settings and sharing** |
+| A font | Click the text, choose a **Font** under its box, then **Just this text** or the **All...** button |
 
 Photos must be JPG, PNG or WebP, under 8 MB. They are resized and given the site's print tone automatically during the rebuild. Until then, the editor preview shows the photo as uploaded. The gallery layout holds seven photos.
 
