@@ -5,10 +5,9 @@ You don't need any technical knowledge, and you can't break the design.
 ## Log in
 
 1. Go to **your website address, followed by `/admin`**.
-2. Enter your email. You'll be sent a short code. Type it in.
-3. Log in with your own editor account.
+2. Press **Log in**, then use your own editor account.
 
-Please don't share your login with anyone.
+Use a strong password that you don't use anywhere else, and please don't share your login with anyone.
 
 ## Change some text
 

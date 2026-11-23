@@ -2,7 +2,13 @@ import { applySuggestions, cleanSuggestions, collectChanges } from "../lib/proof
 
 type Suggestion = { id: number; original: string; replacement: string; reason: string };
 
-const CHECK_TIMEOUT_MS = 14000;
+const CHECK_TIMEOUT_MS = 16000;
+
+type SaveContext = {
+  values: Record<string, unknown>;
+  form: unknown;
+  cms: { api: { tina: { authProvider: { fetchWithToken(input: string, init: RequestInit): Promise<Response> } } } };
+};
 
 const element = <K extends keyof HTMLElementTagNameMap>(tag: K, css: string, text?: string) => {
   const node = document.createElement(tag);
@@ -62,13 +68,13 @@ function askEditor(suggestions: Suggestion[]) {
 }
 
 // Runs when the editor presses Save. Any failure here lets the save continue.
-export async function proofreadBeforeSave({ values, form }: { values: Record<string, unknown>; form: unknown }) {
+export async function proofreadBeforeSave({ values, form, cms }: SaveContext) {
   try {
     const { finalForm } = form as { finalForm: { getState(): { initialValues: unknown }; change(name: string, value: unknown): void } };
     const before = finalForm.getState().initialValues;
     const items = collectChanges(before, values);
     if (!items.length) return undefined;
-    const response = await fetch("/api/proofread", {
+    const response = await cms.api.tina.authProvider.fetchWithToken("/api/proofread", {
       method: "POST",
       headers: { "content-type": "application/json", "x-proofread": "1" },
       body: JSON.stringify({ items: items.map(({ id, key, text }) => ({ id, key, text })) }),
