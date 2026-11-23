@@ -12,9 +12,10 @@ A one-page profile you can edit from the browser, without touching code.
 1. Open `https://your-site/admin` and log in.
 2. Click anything on the page. Its field opens in the left sidebar.
 3. Type. The preview changes as you type.
-4. Press **Save**. A free AI proofreader points out likely spelling or grammar mistakes. Choose **Fix it and save**, **Edit and save** or **Save anyway**.
+4. Press **Save draft**. A free AI proofreader points out likely spelling or grammar mistakes. Choose **Fix it and save**, **Edit and save** or **Save anyway**.
+5. Press **Publish** to send all changed sections live in one deployment. Drafts stay in the browser until then.
 
-Automatic checks run, and the change goes live about a minute or two later. If a save fails the checks, the live site stays as it was and the owner gets an email. Every change is kept in GitHub history, and [SECURITY.md](SECURITY.md) explains how to roll back.
+Automatic checks run, and the changes go live about four minutes later. If a save fails the checks, the live site stays as it was and the owner gets an email. Every change is kept in GitHub history, and [SECURITY.md](SECURITY.md) explains how to roll back.
 
 ---
 

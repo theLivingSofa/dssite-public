@@ -85,6 +85,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
+          # Publish sends one commit per section. Wait, so only the last one deploys.
+          sleep 60
           number=$(gh pr list -R "$REPO" --head edits --base production --state open --json number --jq '.[0].number // empty')
           [ -z "$number" ] && exit 0
           # A newer save has its own run, which will publish it.
