@@ -1,9 +1,30 @@
 import type { Collection, TinaField } from "tinacms";
 import { IMAGE_EXTENSIONS, fieldError } from "../lib/content-rules.mjs";
+import { FONT_FIELDS, FONT_KINDS } from "../lib/fonts.mjs";
+import { CustomFontsField, TypographyField, fontField } from "./font-field";
 import { proofreadBeforeSave } from "./proofread";
 
 // Every section is one JSON file in content/site. All of them render on one page,
 // and the editor previews that page at /edit/.
+type FontKind = keyof typeof FONT_KINDS;
+
+// Adds the font control to each visible text field, and a hidden field that stores
+// a font chosen for that exact text. Stored beside the text, so it moves with list items.
+const withFonts = (fields: TinaField[], path: string): TinaField[] =>
+  fields.flatMap((field): TinaField[] => {
+    const here = `${path}.${field.name}`;
+    if (field.type === "object" && "fields" in field && field.fields) {
+      return [{ ...field, fields: withFonts(field.fields as TinaField[], here) } as TinaField];
+    }
+    const kind = (FONT_FIELDS as Record<string, FontKind>)[here];
+    if (!kind || field.type !== "string" || field.list) return [field];
+    const ui = (field.ui ?? {}) as Record<string, unknown>;
+    return [
+      { ...field, ui: { ...ui, component: fontField(kind, ui.component === "textarea") } } as unknown as TinaField,
+      { type: "string", name: `${field.name}Font`, label: `${field.label} font`, ui: { component: "hidden" } } as TinaField,
+    ];
+  });
+
 const section = (name: string, label: string, fields: TinaField[]): Collection => ({
   name,
   label,
@@ -15,7 +36,7 @@ const section = (name: string, label: string, fields: TinaField[]): Collection =
     router: () => "/edit/",
     beforeSubmit: proofreadBeforeSave,
   },
-  fields,
+  fields: withFonts(fields, name),
 });
 
 const validate = (name: string) => (value: string) => fieldError(name, value);
@@ -212,6 +233,24 @@ export const collections: Collection[] = [
         options: ["profile", "timeline", "research", "institute", "roles", "gallery", "contact"],
       },
     ]),
+    {
+      type: "object",
+      name: "typography",
+      label: "Fonts for each kind of text",
+      description: "Leave a box empty to keep the site's original font.",
+      fields: Object.entries(FONT_KINDS).map(([name, kind]) => ({ type: "string", name, label: kind.label, ui: { component: TypographyField } }) as unknown as TinaField),
+    },
+    {
+      type: "object",
+      name: "customFonts",
+      label: "Uploaded fonts",
+      list: true,
+      ui: { component: CustomFontsField },
+      fields: [
+        { type: "string", name: "name", label: "Font name" },
+        { type: "string", name: "file", label: "Font file" },
+      ],
+    } as unknown as TinaField,
     {
       type: "object",
       name: "person",

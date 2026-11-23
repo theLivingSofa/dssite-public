@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { tinaField, useTina } from "tinacms/dist/react";
 import Site, { type FieldFn } from "../../components/Site";
+import { FONT_KINDS, fontAttributes } from "../../lib/fonts.mjs";
 import type { SiteQuery } from "../../tina/__generated__/types";
 
 const field: FieldFn = (object, property, index) => ({
@@ -24,6 +25,18 @@ export default function EditPreview(props: { data: SiteQuery; query: string; var
     const nav = document.querySelector<HTMLDetailsElement>(".mast__nav");
     if (nav) nav.open = window.matchMedia("(min-width: 900px)").matches;
   }, []);
+
+  // Fonts chosen for a whole kind of text show in the preview before they are saved.
+  const typography = JSON.stringify(data.settings.typography ?? {});
+  useEffect(() => {
+    const html = document.documentElement;
+    const chosen = fontAttributes(JSON.parse(typography)) as Record<string, string>;
+    for (const kind of Object.keys(FONT_KINDS)) {
+      const name = `data-font-${kind}`;
+      if (chosen[name]) html.setAttribute(name, chosen[name]);
+      else html.removeAttribute(name);
+    }
+  }, [typography]);
 
   return (
     <>

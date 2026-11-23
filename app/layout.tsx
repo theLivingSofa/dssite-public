@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { loadSite } from "../lib/content";
+import { fontAttributes } from "../lib/fonts.mjs";
 import { responsive } from "../lib/images";
 
 const ICON =
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning {...fontAttributes(s.typography)}>
       <head>
         <title>{s.title}</title>
         <meta name="description" content={s.description ?? undefined} />
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           fetchPriority="high"
         />
         <link rel="stylesheet" href="/css/main.css" />
+        {(s.customFonts?.length ?? 0) > 0 && <link rel="stylesheet" href="/css/custom-fonts.css" />}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       </head>

@@ -4,6 +4,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { IMAGE_EXTENSIONS, IMAGE_KEYS, MAX_IMAGE_BYTES, MAX_LIST_ITEMS, fieldError, httpsError } from "../lib/content-rules.mjs";
+import { FONT_CHOICES, FONT_EXTENSIONS, MAX_CUSTOM_FONTS, fontBytesError, fontFileError, fontNameError } from "../lib/fonts.mjs";
 
 const HERE = path.resolve(import.meta.dirname, "..");
 const ROOT = path.resolve(process.argv[2] ?? HERE);
@@ -24,7 +25,7 @@ function checkValue(field, value, where) {
     if (typeof value !== "boolean") fail(where, "must be true or false");
     return;
   }
-  if (field.options && !field.options.includes(value)) return fail(where, "is not one of the allowed options");
+  if (field.options && value !== "" && !field.options.includes(value)) return fail(where, "is not one of the allowed options");
   const error = fieldError(field.name, value);
   if (error) fail(where, error);
   if (IMAGE_KEYS.has(field.name) && !error && value && !existsSync(path.join(ROOT, "public", value))) {
@@ -87,6 +88,33 @@ for (const key of ["firstName", "lastName", "role"]) {
 }
 if ((docs.gallery?.items?.length ?? 0) > 7) fail("gallery.items", "the layout holds seven photos");
 
+// Font choices are limited to safe names, because they end up in the page's attributes.
+const checkFontChoices = (node, where) => {
+  if (Array.isArray(node)) return node.forEach((item, i) => checkFontChoices(item, `${where}[${i}]`));
+  if (!node || typeof node !== "object") return;
+  for (const [key, value] of Object.entries(node)) {
+    if (key.endsWith("Font") && value !== "" && value !== null && fontNameError(value)) fail(`${where}.${key}`, "is not a valid font name");
+    else checkFontChoices(value, `${where}.${key}`);
+  }
+};
+for (const [name, doc] of Object.entries(docs)) checkFontChoices(doc, name);
+for (const [kind, value] of Object.entries(docs.settings?.typography ?? {})) {
+  if (value !== "" && value !== null && fontNameError(value)) fail(`settings.typography.${kind}`, "is not a valid font name");
+}
+const customFonts = docs.settings?.customFonts ?? [];
+if (customFonts.length > MAX_CUSTOM_FONTS) fail("settings.customFonts", `has more than ${MAX_CUSTOM_FONTS} fonts`);
+const fontNames = new Set(FONT_CHOICES);
+customFonts.forEach(({ name, file }, i) => {
+  const where = `settings.customFonts[${i}]`;
+  const nameProblem = fontNameError(name);
+  if (nameProblem) fail(`${where}.name`, nameProblem);
+  else if (fontNames.has(name)) fail(`${where}.name`, "is already used by another font");
+  fontNames.add(name);
+  const fileProblem = fontFileError(file);
+  if (fileProblem) fail(`${where}.file`, fileProblem);
+  else if (!existsSync(path.join(ROOT, "public", file))) fail(`${where}.file`, `file not found: ${file}`);
+});
+
 // Uploads are public files, so check what each file really is, not just its name.
 const SIGNATURES = {
   jpg: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
@@ -102,6 +130,11 @@ for (const file of existsSync(MEDIA) ? walk(MEDIA) : []) {
   const where = path.relative(ROOT, file);
   if (path.basename(file) === ".DS_Store") continue;
   const extension = path.extname(file).slice(1).toLowerCase();
+  if (path.dirname(path.relative(MEDIA, file)) === "fonts" && FONT_EXTENSIONS.includes(extension)) {
+    const problem = fontBytesError(readFileSync(file), extension);
+    if (problem) fail(where, problem);
+    continue;
+  }
   if (!IMAGE_EXTENSIONS.includes(extension)) { fail(where, "only JPG, PNG and WebP files are allowed"); continue; }
   if (statSync(file).size > MAX_IMAGE_BYTES) fail(where, "is larger than 8 MB");
   const check = SIGNATURES[extension === "jpeg" ? "jpg" : extension];

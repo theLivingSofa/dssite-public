@@ -25,7 +25,7 @@ There is no human review before publishing. The owner gets an email for every pu
 | Random vandal | Find a leaked key | No secrets in the repo or browser files. The only build token is read-only |
 | Someone who steals an editor's login | Publish fake content | **Not prevented.** The Tina login is the only gate. The owner is emailed about the change and can roll it back |
 | Someone who steals an editor's login | Inject scripts or hidden links | Text is escaped, unsafe links are removed, and the content gate fails the check |
-| Someone who steals an editor's login | Upload a disguised file | Only real JPG, PNG and WebP files under 8 MB pass |
+| Someone who steals an editor's login | Upload a disguised file | Only real JPG, PNG and WebP files under 8 MB, and real WOFF2, TTF and OTF fonts under 2 MB in the fonts folder, pass |
 | Malicious collaborator | Quietly change code from the edit branch | The check fails if `edits` touches anything except content and photos |
 | Someone who steals the owner's GitHub | Disable protection and publish | **Not fully preventable.** 2FA reduces the risk, and the daily check and change log help detect it |
 | Someone who steals the owner's Cloudflare | Change what is deployed | **Not fully preventable.** 2FA reduces the risk, and the daily check helps detect it |
@@ -219,5 +219,6 @@ Do these in order. Each one needs your own login.
 - **The editor has a looser policy than the public page.** `/admin` needs inline scripts to work, so it relies on Tina's login.
 - **One dependency advisory is open.** Zod, used inside Tina's editor tools, has a memory-exhaustion issue with no fix compatible with Tina yet. It does not ship on the public page.
 - **The daily check is not instant.** A problem could be live for up to a day. GitHub pauses scheduled workflows after 60 days without repository activity. The check tries to keep itself switched on, but if the runs stop, re-enable it under **Actions**.
+- **Uploaded fonts are checked for structure, not scanned for malware.** Browsers run their own safety check on web fonts. Anything uploaded is public and stays in Git history, so only upload fonts you have the right to use.
 - **The domain must be renewed.** If it lapses, the site goes offline and someone else could buy the address.
 - **Third parties can change.** GitHub, TinaCloud or Cloudflare can have outages, security incidents, or new plan limits.
