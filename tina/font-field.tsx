@@ -124,12 +124,12 @@ function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
       return;
     }
     form.change(overrideName, value || undefined);
-    setMessage("Previewing on this text. Press Save to keep it.");
+    setMessage("Previewing on this text. Press Save draft to keep it.");
   };
 
   const applyHere = () => {
     form.change(overrideName, choice || undefined);
-    setMessage("Set for just this text. Press Save to keep it.");
+    setMessage("Set for just this text. Press Save draft to keep it.");
   };
 
   const undoHere = () => {
@@ -185,8 +185,8 @@ function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
       setUndoAll(null);
       setMessage(
         ready.length < others.length
-          ? `Saved for ${all.toLowerCase()}. Press Save to keep the other changes in this section.`
-          : `Saved for ${all.toLowerCase()}. It will go live in about two minutes.`,
+          ? `Draft saved for ${all.toLowerCase()}. Press Save draft to keep the other changes in this section.`
+          : `Draft saved for ${all.toLowerCase()}. Press Publish to put it live.`,
       );
     } catch {
       setMessage("That did not save. Please try again.");
@@ -215,7 +215,7 @@ function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
         {undoAll ? (
           <>
             <button type="button" style={buttonStyle(true)} onClick={saveAll} disabled={saving}>
-              {saving ? "Saving…" : `Save for ${all.toLowerCase()}`}
+              {saving ? "Saving…" : `Save draft for ${all.toLowerCase()}`}
             </button>
             <button type="button" style={buttonStyle(false)} onClick={cancelAll} disabled={saving}>Cancel</button>
           </>
@@ -316,7 +316,7 @@ export function CustomFontsField({ input }: { input: { value?: CustomFont[]; onC
       setFile(null);
       setName("");
       if (picker.current) picker.current.value = "";
-      setStatus("Uploaded. Press Save. It appears in the Font menus after publishing, in about two minutes.");
+      setStatus("Uploaded. Press Save draft, then Publish. It appears in the Font menus about four minutes after publishing.");
     } catch {
       setStatus("The upload failed. Please try again.");
     } finally {
@@ -331,7 +331,7 @@ export function CustomFontsField({ input }: { input: { value?: CustomFont[]; onC
       {saved.map((font) => (
         <div key={font.file} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "6px 0", borderTop: "1px solid #ddd5c5" }}>
           <span>{font.name} <small style={{ color: "#4a443b" }}>{published.includes(font.name) ? "Ready" : "Publishing"}</small></span>
-          <button type="button" style={buttonStyle(false)} onClick={() => { input.onChange(saved.filter((item) => item.file !== font.file)); setStatus("Removed. Press Save to keep this."); }}>Remove</button>
+          <button type="button" style={buttonStyle(false)} onClick={() => { input.onChange(saved.filter((item) => item.file !== font.file)); setStatus("Removed. Press Save draft to keep this."); }}>Remove</button>
         </div>
       ))}
       <div style={{ display: "grid", gap: 6, marginTop: 8 }}>

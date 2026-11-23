@@ -7,12 +7,12 @@ No setup is unhackable. [Residual risks](#residual-risks) lists what can still g
 ## How a change goes live
 
 ```text
-Editor at /admin  →  AI proofreader suggests fixes  →  saved to `edits`  →  automatic checks
+Editor at /admin  →  proofreader on each Save draft  →  draft in browser  →  Publish to `edits`  →  checks
                                                                                 │
 Live site  ←  Cloudflare deploys  ←  `production`  ←  published automatically if they pass
 ```
 
-There is no human review before publishing. The owner gets an email for every published change. The AI proofreader only suggests fixes and has no power to save or publish.
+Drafts stay in the editor's browser and are not sent anywhere until Publish. There is no human review after Publish. The owner gets an email for every published change. The AI proofreader only suggests fixes and has no power to save or publish.
 
 ## Threat model
 

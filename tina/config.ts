@@ -1,9 +1,10 @@
 import { defineConfig } from "tinacms";
 import { IMAGE_MIME_TYPES } from "../lib/content-rules.mjs";
 import { collections } from "./collections";
+import { draftForm, installDrafts } from "./drafts";
 
-// The editor always reads and saves on `edits`. Saves reach `production`
-// only after the content checks pass.
+// Save draft stays in the browser. Publish writes to `edits`, and changes reach
+// `production` only after the content checks pass.
 const branch = "edits";
 
 export default defineConfig({
@@ -25,6 +26,7 @@ export default defineConfig({
   // Every section is a single document, so Tina's back arrow would reopen the same one.
   // In the page preview it shows the list of sections instead, and keeps unsaved changes.
   cmsCallback: (cms) => {
+    installDrafts(cms);
     if (typeof document !== "undefined") {
       document.addEventListener(
         "click",
@@ -40,5 +42,6 @@ export default defineConfig({
     }
     return cms;
   },
+  formifyCallback: draftForm as never,
   schema: { collections },
 });
