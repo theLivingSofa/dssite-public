@@ -20,7 +20,7 @@ Automatic checks run, and the change goes live about a minute or two later. If a
 
 ## First-time setup
 
-Follow **Things only Ayush can do** in [SECURITY.md](SECURITY.md). It covers GitHub, TinaCloud, Cloudflare Pages and Cloudflare Access in the right order.
+Follow **Things only Ayush can do** in [SECURITY.md](SECURITY.md). It covers GitHub, TinaCloud and Cloudflare Pages in the right order.
 
 ### Connecting a custom domain
 
@@ -41,9 +41,8 @@ In Cloudflare, open your Pages project, then **Custom domains > Set up a domain*
 **After the domain works:**
 
 1. Add `https://your-domain` to **Site URLs** in TinaCloud.
-2. Add the `admin` and `edit` paths for the domain to your Cloudflare Access application.
-3. In `/admin`, change **Website address** under **11 Site settings and sharing** to `https://your-domain/`.
-4. Update the `LIVE_URL` repository variable so the daily check follows the new address.
+2. In `/admin`, change **Website address** under **11 Site settings and sharing** to `https://your-domain/`.
+3. Update the `LIVE_URL` repository variable so the daily check follows the new address.
 
 ---
 

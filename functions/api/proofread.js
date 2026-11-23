@@ -12,7 +12,8 @@ const GEMINI_MODEL = "gemini-flash-lite-latest";
 const CLOUDFLARE_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const MODEL_TIMEOUT_MS = 6000;
 const MAX_BODY_BYTES = 32 * 1024;
-const KEY_CACHE_MS = 60 * 60 * 1000;
+const LOGIN_TIMEOUT_MS = 2000;
+const MAX_LOGIN_HEADER = 8192;
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -20,37 +21,18 @@ const json = (body, status = 200) =>
     headers: { "content-type": "application/json", "cache-control": "no-store", "x-robots-tag": "noindex" },
   });
 
-const base64url = (text) => Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
-const decodeJson = (text) => JSON.parse(new TextDecoder().decode(base64url(text)));
-
-let accessKeys = { team: "", at: 0, keys: [] };
-
-async function signingKeys(team) {
-  if (accessKeys.team === team && Date.now() - accessKeys.at < KEY_CACHE_MS) return accessKeys.keys;
-  const response = await fetch(`https://${team}/cdn-cgi/access/certs`);
-  if (!response.ok) throw new Error("could not load Access keys");
-  const { keys } = await response.json();
-  accessKeys = { team, at: Date.now(), keys };
-  return keys;
-}
-
-// Only someone who passed the Cloudflare Access login can use this endpoint.
+// Only someone logged in to this TinaCloud project can use this endpoint.
 async function isSignedIn(request, env) {
-  const token = request.headers.get("cf-access-jwt-assertion");
-  const team = env.ACCESS_TEAM_DOMAIN;
-  if (!token || !team || !env.ACCESS_AUD) return false;
+  const authorization = request.headers.get("authorization") ?? "";
+  const clientId = env.NEXT_PUBLIC_TINA_CLIENT_ID;
+  if (!clientId || authorization.length > MAX_LOGIN_HEADER || !/^Bearer [\w.-]+$/.test(authorization)) return false;
   try {
-    const [head, body, signature] = token.split(".");
-    const header = decodeJson(head);
-    const claims = decodeJson(body);
-    const now = Date.now() / 1000;
-    const audiences = [claims.aud].flat();
-    if (header.alg !== "RS256" || claims.iss !== `https://${team}` || !audiences.includes(env.ACCESS_AUD)) return false;
-    if (!(claims.exp > now) || (claims.nbf && claims.nbf > now + 60)) return false;
-    const jwk = (await signingKeys(team)).find(({ kid }) => kid === header.kid);
-    if (!jwk) return false;
-    const key = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
-    return await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, base64url(signature), new TextEncoder().encode(`${head}.${body}`));
+    const response = await fetch(`https://identity.tinajs.io/v2/apps/${encodeURIComponent(clientId)}/currentUser`, {
+      headers: { authorization },
+      redirect: "manual",
+      signal: AbortSignal.timeout(LOGIN_TIMEOUT_MS),
+    });
+    return response.ok;
   } catch {
     return false;
   }
