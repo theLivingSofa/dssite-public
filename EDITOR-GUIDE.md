@@ -20,9 +20,9 @@ The change appears on the live website in about two minutes.
 
 ## Change a font
 
-1. Click the text. Under its box on the left, choose a **Font**.
-2. Press **Just this text**, then **Save**, to change only that text.
-3. Or press the second button, such as **All section headings**, to change every text of that kind. Check the preview, then press **Save for all section headings** or **Cancel**.
+1. Click the text. Under its box on the left, choose a **Font**. The preview changes straight away, so you can flip through fonts. Nothing is public yet.
+2. To keep it for only that text, press **Save**. Press **Undo** to go back.
+3. To change every text of that kind, press the second button, such as **All section headings**. You can keep flipping through fonts, then press **Save for all section headings** or **Cancel**.
 
 The big name has its own setting and never changes with the others. Choose **Site default** to go back to the original font.
 

@@ -18,8 +18,20 @@ const EDITOR_CSS = `
 img[data-tina-field] { outline-offset: -4px !important; }
 `;
 
+const SECTIONS = new Set(["hero", "profile", "quote", "timeline", "research", "institute", "roles", "gallery", "contact", "footer", "settings"]);
+
+// The editor's address says which section was chosen from its menu.
+const chosenSection = () => {
+  try {
+    const section = new URLSearchParams(window.parent.location.hash.split("?")[1] ?? "").get("section");
+    return section && SECTIONS.has(section) ? `content/site/${section}.json` : false;
+  } catch {
+    return false;
+  }
+};
+
 export default function EditPreview(props: { data: SiteQuery; query: string; variables: Record<string, never> }) {
-  const { data } = useTina(props);
+  const { data } = useTina({ ...props, experimental___selectFormByFormId: chosenSection });
 
   useEffect(() => {
     const nav = document.querySelector<HTMLDetailsElement>(".mast__nav");
