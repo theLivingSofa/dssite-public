@@ -14,7 +14,8 @@ import {
 type Kind = keyof typeof FONT_KINDS;
 type FinalForm = {
   change(name: string, value: unknown): void;
-  getState(): { values: Record<string, unknown>; pristine: boolean };
+  getState(): { values: Record<string, unknown>; initialValues?: Record<string, unknown>; pristine: boolean };
+  subscribe(listener: () => void, subscription: { values: true; initialValues: true }): () => void;
 };
 type TinaForm = { id?: string; path?: string; finalForm: FinalForm; submit(): Promise<unknown> | undefined };
 type FieldProps = { input: { name: string }; form: FinalForm; tinaForm?: TinaForm };
@@ -75,17 +76,37 @@ function ownFonts(node: unknown, schemaPath: string, formPath: string, kind: Kin
 function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
   const cms = useCMS();
   const overrideName = `${input.name}Font`;
-  const [choice, setChoice] = React.useState(() => fontChoice(valueAt(form.getState().values, overrideName)) ?? "");
   const [message, setMessage] = React.useState("");
   const [undoAll, setUndoAll] = React.useState<PendingAll | null>(null);
   const [saving, setSaving] = React.useState(false);
   const { all } = FONT_KINDS[kind];
-  const { fonts } = useFontList(choice);
 
   const settingsForm = (): TinaForm | undefined =>
     (cms.state.forms as { tinaForm: TinaForm }[]).find(({ tinaForm }) =>
       SETTINGS_FILE.test(tinaForm.path ?? tinaForm.id ?? ""),
     )?.tinaForm;
+
+  const savedOwn = () => fontChoice(valueAt(form.getState().initialValues, overrideName));
+
+  // The menu always shows the font this text is using right now.
+  const readView = () => {
+    const own = fontChoice(valueAt(form.getState().values, overrideName));
+    const shared = fontChoice(valueAt(settingsForm()?.finalForm.getState().values, `typography.${kind}`));
+    return { choice: own ?? shared ?? "", changed: own !== savedOwn() };
+  };
+  const [view, setView] = React.useState(readView);
+  const { choice, changed } = view;
+  const { fonts } = useFontList(choice);
+
+  React.useEffect(() => {
+    const refresh = () => setView(readView());
+    const stops = [form.subscribe(refresh, { values: true, initialValues: true })];
+    const target = settingsForm();
+    if (target && target.finalForm !== form) stops.push(target.finalForm.subscribe(refresh, { values: true, initialValues: true }));
+    return () => stops.forEach((stop) => stop());
+    // Each field has one form and one stored font name for its lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, overrideName]);
 
   const setAll = (target: TinaForm, font: string | undefined) => {
     const typography = { ...((target.finalForm.getState().values.typography as Record<string, unknown>) ?? {}) };
@@ -94,9 +115,26 @@ function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
     target.finalForm.change("typography", typography);
   };
 
+  // Picking a font shows it in the preview at once. Nothing is saved until Save is pressed.
+  const pick = (value: string) => {
+    const target = settingsForm();
+    if (undoAll && target) {
+      setAll(target, value || undefined);
+      setMessage(`Previewing ${all.toLowerCase()}. Nothing is saved yet.`);
+      return;
+    }
+    form.change(overrideName, value || undefined);
+    setMessage("Previewing on this text. Press Save to keep it.");
+  };
+
   const applyHere = () => {
     form.change(overrideName, choice || undefined);
-    setMessage("Shown in the preview. Press Save to keep it.");
+    setMessage("Set for just this text. Press Save to keep it.");
+  };
+
+  const undoHere = () => {
+    form.change(overrideName, savedOwn());
+    setMessage("");
   };
 
   // "All" means all: texts that had their own font follow the new choice too.
@@ -106,6 +144,9 @@ function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
       setMessage("Open this page from the main preview to change all of them.");
       return;
     }
+    const font = choice;
+    // A font being tried on this text is not something Cancel should bring back.
+    form.change(overrideName, savedOwn());
     const forms = (cms.state.forms as { tinaForm: TinaForm }[])
       .map(({ tinaForm }) => tinaForm)
       .filter((item) => DOCUMENT.test(item.path ?? item.id ?? ""));
@@ -117,7 +158,7 @@ function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
     });
     setUndoAll({ previous: valueAt(target.finalForm.getState().values, `typography.${kind}`), cleared, clean });
     cleared.forEach(({ form: item, name }) => item.finalForm.change(name, undefined));
-    setAll(target, choice || undefined);
+    setAll(target, font || undefined);
     setMessage(`Previewing ${all.toLowerCase()}. Nothing is saved yet.`);
   };
 
@@ -160,8 +201,8 @@ function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
         Font
         <select
           value={choice}
-          onChange={(event) => setChoice(event.target.value)}
-          disabled={Boolean(undoAll)}
+          onChange={(event) => pick(event.target.value)}
+          disabled={saving}
           style={{ width: "100%", minHeight: 34, padding: "0 6px", border: "1px solid #bdb5a5", borderRadius: 4, background: "#fff", font: "400 13px/1.2 system-ui, sans-serif" }}
         >
           <option value="">Site default</option>
@@ -182,6 +223,7 @@ function FontControl({ kind, input, form }: FieldProps & { kind: Kind }) {
           <>
             <button type="button" style={buttonStyle(false)} onClick={applyHere}>Just this text</button>
             <button type="button" style={buttonStyle(true)} onClick={previewAll}>{all}</button>
+            {changed && <button type="button" style={buttonStyle(false)} onClick={undoHere}>Undo</button>}
           </>
         )}
       </div>

@@ -33,7 +33,8 @@ const section = (name: string, label: string, fields: TinaField[]): Collection =
   match: { include: name },
   ui: {
     allowedActions: { create: false, delete: false },
-    router: () => "/edit/",
+    // Names the section, so the preview can open the one that was clicked.
+    router: () => `/edit/?section=${name}`,
     beforeSubmit: proofreadBeforeSave,
   },
   fields: withFonts(fields, name),

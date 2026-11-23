@@ -22,5 +22,23 @@ export default defineConfig({
       publicFolder: "public",
     },
   },
+  // Every section is a single document, so Tina's back arrow would reopen the same one.
+  // In the page preview it shows the list of sections instead, and keeps unsaved changes.
+  cmsCallback: (cms) => {
+    if (typeof document !== "undefined") {
+      document.addEventListener(
+        "click",
+        (event) => {
+          const back = (event.target as Element | null)?.closest?.('button[aria-label^="Back to "]');
+          if (!back || !window.location.hash.startsWith("#/~")) return;
+          event.preventDefault();
+          event.stopPropagation();
+          cms.dispatch({ type: "forms:set-active-form-id", value: null });
+        },
+        true,
+      );
+    }
+    return cms;
+  },
   schema: { collections },
 });
