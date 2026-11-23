@@ -6,7 +6,7 @@
   "shareTitle": "Prof. Dheeraj Sharma, Director of IIM Rohtak",
   "shareDescription": "Education, research on relationships in business, career dates and official contacts.",
   "shareImage": "/assets/img/og.jpg",
-  "shareImageAlt": "Prof. Dheeraj Sharma, Director of IIM Rohtak, beside his name.",
+  "shareImageAlt": "Prof. Dheeraj Sharma, Director of IIM Rohtak, beside his name",
   "menuLabel": "Sections",
   "nav": [
     {
@@ -36,6 +36,12 @@
     {
       "label": "Contact",
       "anchor": "contact"
+    }
+  ],
+  "customFonts": [
+    {
+      "name": "Test Upload",
+      "file": "/assets/img/fonts/test-upload-f732cd33.woff2"
     }
   ],
   "person": {
