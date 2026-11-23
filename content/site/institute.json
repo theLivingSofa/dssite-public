@@ -1,0 +1,100 @@
+{
+  "railLabel": "At IIM Rohtak",
+  "heading": "At IIM Rohtak",
+  "ledgers": [
+    {
+      "heading": "Dated",
+      "rows": [
+        {
+          "label": "2009",
+          "text": "The institute is established.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/about.php"
+        },
+        {
+          "label": "Dec 2019",
+          "text": "Rohtak hosts the 7th Pan-IIM World Management Conference.",
+          "sourceLabel": "IIM Rohtak news index",
+          "sourceUrl": "https://www.iimrohtak.ac.in/iimr-in-media.php"
+        },
+        {
+          "label": "May 2020",
+          "text": "Applications open for the Post Graduate Diploma in Sports Management for Executives.",
+          "sourceLabel": "IIM Rohtak news index",
+          "sourceUrl": "https://www.iimrohtak.ac.in/iimr-in-media.php"
+        },
+        {
+          "label": "Jun 2020",
+          "text": "Women make up 69 per cent of the new PGP batch.",
+          "sourceLabel": "IIM Rohtak news index",
+          "sourceUrl": "https://www.iimrohtak.ac.in/iimr-in-media.php"
+        },
+        {
+          "label": "8 Sep 2020",
+          "text": "The second batch of the five-year Integrated Programme in Management is inducted.",
+          "sourceLabel": "IIM Rohtak news index",
+          "sourceUrl": "https://www.iimrohtak.ac.in/iimr-in-media.php"
+        },
+        {
+          "label": "Jul 2023",
+          "text": "Women make up 78 per cent of the 14th PGP batch, whose students come from 24 states and union territories.",
+          "sourceLabel": "Careers360",
+          "sourceUrl": "https://news.careers360.com/78-of-iim-rohtaks-new-pgp-batch-women-students-from-24-states-uts-enrol/amp"
+        }
+      ]
+    },
+    {
+      "heading": "Standing",
+      "rows": [
+        {
+          "label": "Status",
+          "text": "Established under the IIM Act 2017; an Institute of National Importance.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/about.php"
+        },
+        {
+          "label": "Campus",
+          "text": "About 200 acres on National Highway 10 at Sunaria, Rohtak, in the National Capital Region. The institute puts it 90 minutes from Delhi's international airport.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/about.php"
+        },
+        {
+          "label": "Accredited",
+          "text": "AMBA. The fifth IIM to gain it, after Calcutta, Indore, Kozhikode and Lucknow, and the first of the second- and third-generation IIMs.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/accreditation.php"
+        },
+        {
+          "label": "Accredited",
+          "text": "Business Graduates Association (BGA), for its undergraduate business education.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/accreditation.php"
+        },
+        {
+          "label": "Ranked",
+          "text": "19th in Management, NIRF India Rankings 2025.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/ranking.php"
+        },
+        {
+          "label": "Ranked",
+          "text": "151+ in the QS World University Rankings 2024 for postgraduate management programmes, in its first entry.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/ranking.php"
+        },
+        {
+          "label": "Ranked",
+          "text": "8th among B-schools in the Outlook-ICARE India MBA Rankings 2021.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/ranking.php"
+        },
+        {
+          "label": "Programmes",
+          "text": "PGP, PGPx, five-year IPM (management), five-year IPL (law), doctoral programme (DPM), ePGDSM in sports management, MMS in public policy, and executive education.",
+          "sourceLabel": "IIM Rohtak",
+          "sourceUrl": "https://www.iimrohtak.ac.in/"
+        }
+      ]
+    }
+  ]
+}

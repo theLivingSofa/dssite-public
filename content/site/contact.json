@@ -1,0 +1,51 @@
+{
+  "railLabel": "Contact",
+  "heading": "Contact",
+  "columns": [
+    {
+      "heading": "Director's office",
+      "rows": [
+        {
+          "label": "Phone",
+          "value": "01262-274050",
+          "href": "tel:+911262274050"
+        },
+        {
+          "label": "Fax",
+          "value": "01262-274051"
+        },
+        {
+          "label": "Email",
+          "value": "director@iimrohtak.ac.in",
+          "href": "mailto:director@iimrohtak.ac.in"
+        }
+      ],
+      "sourceLabel": "iimrohtak.ac.in/director.php",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "heading": "Institute",
+      "rows": [
+        {
+          "label": "Phone",
+          "value": "+91-1262-228500",
+          "href": "tel:+911262228500"
+        },
+        {
+          "label": "Email",
+          "value": "admin@iimrohtak.ac.in",
+          "href": "mailto:admin@iimrohtak.ac.in"
+        },
+        {
+          "label": "Address",
+          "value": "Management City, NH-10 Southern Bypass, Sunaria, Rohtak 124010, Haryana"
+        }
+      ],
+      "sourceLabel": "iimrohtak.ac.in/contact.php",
+      "sourceUrl": "https://www.iimrohtak.ac.in/contact.php"
+    }
+  ],
+  "sourcePrefix": "Source:",
+  "officialLabel": "Go to the official IIM Rohtak website",
+  "officialUrl": "https://www.iimrohtak.ac.in"
+}

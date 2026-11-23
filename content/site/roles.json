@@ -1,0 +1,37 @@
+{
+  "railLabel": "Roles and memberships",
+  "heading": "Roles and memberships",
+  "roles": [
+    {
+      "label": "Editorial",
+      "text": "Past associate editor, *Journal of Marketing Channels*. Past editor, Academy of Marketing Science proceedings.",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "label": "Societies",
+      "text": "Active member of the Academy of Marketing Science, the American Marketing Association and the National Conference of Sales Management.",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "label": "Fellowships",
+      "text": "American Marketing Association Doctoral Consortium Fellow. National Conference of Sales Management Doctoral Fellow.",
+      "sourceUrl": "https://archives.iima.ac.in/faculty/Dheeraj-Sharma.html"
+    },
+    {
+      "label": "Consulting",
+      "text": "Projects with multinational companies and with the Ministries of Home Affairs, Defence, and Sports and Youth Affairs, during his years at IIM Ahmedabad.",
+      "sourceUrl": "https://archives.iima.ac.in/faculty/Dheeraj-Sharma.html"
+    }
+  ],
+  "sourcesLabel": "Sources:",
+  "sources": [
+    {
+      "label": "IIM Rohtak",
+      "url": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "label": "IIM Ahmedabad Archives",
+      "url": "https://archives.iima.ac.in/faculty/Dheeraj-Sharma.html"
+    }
+  ]
+}

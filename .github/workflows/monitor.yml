@@ -1,0 +1,41 @@
+# Checks the live site once a day and emails the owner if it does not match production.
+name: Live site check
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: production
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Compare the live site with production
+        env:
+          LIVE_URL: ${{ vars.LIVE_URL }}
+        run: node scripts/check-live.mjs
+      - name: Alert the owner
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Live site alert"
+          issue=$(gh issue list -R "$REPO" --state open --author "app/github-actions" --search "$title in:title" --json number --jq '.[0].number // empty')
+          [ -z "$issue" ] && issue=$(gh issue create -R "$REPO" --title "$title" --body "Failed daily checks of the live site are recorded here." | grep -oE '[0-9]+$')
+          gh issue comment "$issue" -R "$REPO" --body "@$OWNER the live site does not match production. Details: $RUN. If it looks wrong, follow the rollback steps in SECURITY.md."

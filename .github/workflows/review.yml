@@ -1,0 +1,86 @@
+# Checks every proposed change and opens the pull request you approve.
+# A bot opens it because GitHub does not let authors approve their own pull requests.
+name: Review
+
+on:
+  push:
+    branches: [edits, "code/**"]
+  pull_request:
+    branches: [production]
+
+permissions: {}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Get the trusted checker from production
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: production
+          path: trusted
+          persist-credentials: false
+      - name: Get the proposed change
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: trusted/.node-version
+      - name: Check the content
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ "$HEAD_REF" = "edits" ]; then
+            node trusted/scripts/validate-content.mjs candidate
+          else
+            node candidate/scripts/validate-content.mjs candidate
+          fi
+      - name: Edits may only change content and photos
+        if: ${{ (github.head_ref || github.ref_name) == 'edits' }}
+        working-directory: candidate
+        run: |
+          git fetch --quiet "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" production
+          outside=$(git diff --name-only FETCH_HEAD...HEAD | grep -Ev '^(content/site/[^/]+\.json|public/assets/img/.+)$' || true)
+          if [ -n "$outside" ]; then
+            echo "These files cannot be changed from the edits branch:"
+            echo "$outside"
+            exit 1
+          fi
+
+  open-pull-request:
+    needs: validate
+    if: ${{ always() && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Open a pull request if there is none
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          OWNER: ${{ github.repository_owner }}
+          PREVIEW: ${{ vars.EDITS_PREVIEW_URL }}
+        run: |
+          open=$(gh pr list -R "$REPO" --head "$BRANCH" --base production --state open --json number --jq '.[0].number // empty')
+          [ -n "$open" ] && exit 0
+          ahead=$(gh api "repos/$REPO/compare/production...$BRANCH" --jq .ahead_by)
+          [ "$ahead" = "0" ] && exit 0
+          body="@$OWNER, these changes are waiting for your approval. Nothing is live yet."
+          [ -n "$PREVIEW" ] && [ "$BRANCH" = "edits" ] && body="$body
+
+          Private preview: $PREVIEW"
+          body="$body
+
+          Check **Files changed**, then approve and merge to publish."
+          gh pr create -R "$REPO" --base production --head "$BRANCH" --title "Review changes from $BRANCH" --body "$body"

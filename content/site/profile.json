@@ -1,0 +1,27 @@
+{
+  "railLabel": "Profile",
+  "heading": "Profile",
+  "lead": "Dheeraj Sharma is a marketing scholar who has spent most of his career on one subject: relationships in business.",
+  "paragraphs": [
+    {
+      "text": "His doctorate is from Louisiana Tech University in the United States. He majored in marketing, with minors in psychology and quantitative analysis. The relationships he studies run in several directions: between a company and its employees, between a manufacturer and the channels that sell for it, between a shopper and a brand, between a business and the society around it."
+    },
+    {
+      "text": "He worked at IIM Ahmedabad from May 2011 to February 2019. On 10 February 2017 the Appointments Committee of the Cabinet, headed by the Prime Minister, appointed him Director of IIM Rohtak."
+    },
+    {
+      "text": "He has also edited and consulted. He was an associate editor of the *Journal of Marketing Channels* and edited the Academy of Marketing Science proceedings. At IIM Ahmedabad he took on consulting projects for multinational companies and for the Ministries of Home Affairs, Defence, and Sports and Youth Affairs."
+    }
+  ],
+  "sourcesLabel": "Sources:",
+  "sources": [
+    {
+      "label": "IIM Rohtak, Director's page",
+      "url": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "label": "IIM Ahmedabad Archives",
+      "url": "https://archives.iima.ac.in/faculty/Dheeraj-Sharma.html"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+query site {
+  hero(relativePath: "hero.json") { ...HeroParts }
+  profile(relativePath: "profile.json") { ...ProfileParts }
+  quote(relativePath: "quote.json") { ...QuoteParts }
+  timeline(relativePath: "timeline.json") { ...TimelineParts }
+  research(relativePath: "research.json") { ...ResearchParts }
+  institute(relativePath: "institute.json") { ...InstituteParts }
+  roles(relativePath: "roles.json") { ...RolesParts }
+  gallery(relativePath: "gallery.json") { ...GalleryParts }
+  contact(relativePath: "contact.json") { ...ContactParts }
+  footer(relativePath: "footer.json") { ...FooterParts }
+  settings(relativePath: "settings.json") { ...SettingsParts }
+}

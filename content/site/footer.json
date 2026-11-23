@@ -1,0 +1,59 @@
+{
+  "heading": "IIM Rohtak",
+  "linkLabel": "www.iimrohtak.ac.in",
+  "linkUrl": "https://www.iimrohtak.ac.in",
+  "updatedLabel": "Last updated",
+  "updatedText": "7 October 2026",
+  "updatedDate": "2026-10-07",
+  "sourcesHeading": "Sources",
+  "sources": [
+    {
+      "label": "IIM Rohtak: Director's page",
+      "url": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "label": "IIM Rohtak: Director's Message",
+      "url": "https://www.iimrohtak.ac.in/director-message.php"
+    },
+    {
+      "label": "IIM Rohtak: About",
+      "url": "https://www.iimrohtak.ac.in/about.php"
+    },
+    {
+      "label": "IIM Rohtak: Accreditation",
+      "url": "https://www.iimrohtak.ac.in/accreditation.php"
+    },
+    {
+      "label": "IIM Rohtak: Ranking and outreach",
+      "url": "https://www.iimrohtak.ac.in/ranking.php"
+    },
+    {
+      "label": "IIM Rohtak: News index",
+      "url": "https://www.iimrohtak.ac.in/iimr-in-media.php"
+    },
+    {
+      "label": "IIM Rohtak: Contact",
+      "url": "https://www.iimrohtak.ac.in/contact.php"
+    },
+    {
+      "label": "IIM Ahmedabad Archives: faculty record",
+      "url": "https://archives.iima.ac.in/faculty/Dheeraj-Sharma.html"
+    },
+    {
+      "label": "Business Standard, 11 Feb 2017",
+      "url": "https://www.business-standard.com/article/management/pm-led-appointments-cabinet-committee-appoints-directors-for-10-iims-117021000711_1.html"
+    },
+    {
+      "label": "Careers360: 14th PGP batch",
+      "url": "https://news.careers360.com/78-of-iim-rohtaks-new-pgp-batch-women-students-from-24-states-uts-enrol/amp"
+    },
+    {
+      "label": "IBTimes India: World Management Congress award",
+      "url": "https://www.ibtimes.co.in/iim-rohtak-director-prof-dheeraj-sharma-conferred-exemplary-governance-leadership-award-896150"
+    },
+    {
+      "label": "Crossref: publication records via DOI",
+      "url": "https://api.crossref.org/"
+    }
+  ]
+}

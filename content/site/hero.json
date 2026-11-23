@@ -1,0 +1,24 @@
+{
+  "portrait": "/assets/img/portrait.webp",
+  "portraitAlt": "Prof. Dheeraj Sharma in a grey suit and striped tie, wearing glasses, photographed in front of an abstract painting.",
+  "portraitCredit": "Portrait: IIM Rohtak",
+  "role": "Director, Indian Institute of Management Rohtak",
+  "honorific": "Prof.",
+  "firstName": "Dheeraj",
+  "lastName": "Sharma",
+  "line": "A marketing scholar who studies how relationships work in business. Appointed Director of IIM Rohtak in February 2017.",
+  "facts": [
+    {
+      "label": "Appointed",
+      "value": "10 February 2017"
+    },
+    {
+      "label": "Doctorate",
+      "value": "Louisiana Tech University"
+    },
+    {
+      "label": "Earlier",
+      "value": "IIM Ahmedabad, 2011 to 2019"
+    }
+  ]
+}

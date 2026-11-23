@@ -1,0 +1,140 @@
+{
+  "railLabel": "Research and teaching",
+  "heading": "Research and teaching",
+  "lead": "His research interest is “relationships” in business. It runs through seven areas.",
+  "areas": [
+    {
+      "name": "Workforce motivation",
+      "description": "Employees at different levels of an organisation."
+    },
+    {
+      "name": "Behavioural channel theory",
+      "description": "The relationship between channels and the organisations that use them."
+    },
+    {
+      "name": "International marketing strategy",
+      "description": "Cross-cultural relationships, such as those between brands across national boundaries."
+    },
+    {
+      "name": "Personal selling",
+      "description": ""
+    },
+    {
+      "name": "Brand management",
+      "description": "The relationship between consumers and brands."
+    },
+    {
+      "name": "Social media management",
+      "description": "Human-to-human relationships."
+    },
+    {
+      "name": "Ethics",
+      "description": "The relationship between the individual, the organisation and society."
+    }
+  ],
+  "sourcesLabel": "Source:",
+  "sources": [
+    {
+      "label": "IIM Rohtak, Director's page",
+      "url": "https://www.iimrohtak.ac.in/director.php"
+    }
+  ],
+  "notes": [
+    {
+      "heading": "Teaching and talks",
+      "text": "The institute says he has taught or presented research at institutions in North America, Europe and Asia, and speaks on branding, employee motivation, ethics and international business."
+    },
+    {
+      "heading": "Publications",
+      "text": "The institute's profile credits him with over 100 articles in journals and conference proceedings."
+    }
+  ],
+  "papersHeading": "Selected papers",
+  "papers": [
+    {
+      "year": "2015",
+      "title": "Does relationship marketing matter in online retailing? A meta-analytic approach",
+      "url": "https://doi.org/10.1007/s11747-015-0429-6",
+      "journal": "Journal of the Academy of Marketing Science",
+      "coauthors": "with Varsha Verma and Jagdish Sheth"
+    },
+    {
+      "year": "2011",
+      "title": "How to attain desired outcomes through channel conflict negotiation",
+      "url": "https://doi.org/10.1080/1046669x.2011.558828",
+      "journal": "Journal of Marketing Channels",
+      "coauthors": "with Annie Liu"
+    },
+    {
+      "year": "2018",
+      "title": "Determinants of conflict in channel relationships: a meta-analytic review",
+      "url": "https://doi.org/10.1108/jbim-08-2016-0195",
+      "journal": "Journal of Business & Industrial Marketing",
+      "coauthors": "with Biswajita Parida"
+    },
+    {
+      "year": "2009",
+      "title": "Internet channel and perceived cannibalization",
+      "url": "https://doi.org/10.1108/03090560910961524",
+      "journal": "European Journal of Marketing",
+      "coauthors": "with Jule B. Gassenheimer"
+    },
+    {
+      "year": "2009",
+      "title": "An exploratory investigation of the consumer religious commitment and its influence on store loyalty",
+      "url": "https://doi.org/10.1108/07363760910976592",
+      "journal": "Journal of Consumer Marketing",
+      "coauthors": "with Krist Swimberghe and Laura Flurry"
+    },
+    {
+      "year": "2004",
+      "title": "Brand-country of origin (COO) knowledge and COO image: investigation in an emerging franchise market",
+      "url": "https://doi.org/10.1108/10610420410538041",
+      "journal": "Journal of Product & Brand Management",
+      "coauthors": "with Audhesh K. Paswan"
+    }
+  ],
+  "booksHeading": "Books and edited volumes",
+  "books": [
+    {
+      "title": "Principles of Marketing",
+      "publisher": "Cengage",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "title": "Business to Business Marketing",
+      "publisher": "Cengage",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "title": "Leadership Lessons from Military",
+      "publisher": "Sage",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "title": "Consumer Behaviour: A Managerial Perspective",
+      "publisher": "Cengage",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "title": "Cross Cultural Perspective in Global Marketplace",
+      "publisher": "Springer",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "title": "Proceedings of Academy of Marketing Science",
+      "publisher": "Springer",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "title": "Global Business",
+      "publisher": "Cengage",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    },
+    {
+      "title": "Swinging the Mandate",
+      "publisher": "Penguin",
+      "sourceUrl": "https://www.iimrohtak.ac.in/director.php"
+    }
+  ]
+}

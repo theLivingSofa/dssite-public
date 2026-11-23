@@ -1,0 +1,24 @@
+.DS_Store
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Secrets stay out of Git
+.env
+.env.*
+!.env.example
+
+# Generated at build time
+public/admin/
+public/assets/generated/
+lib/images.generated.json
+tina/__generated__/
+
+# Private working notes never belong in this public repository
+content/*.md
+DESIGN.md
+
+# Local Cloudflare test cache
+.wrangler/

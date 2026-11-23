@@ -1,0 +1,61 @@
+{
+  "siteUrl": "https://sofa42.netlify.app/",
+  "title": "Prof. Dheeraj Sharma, Director of IIM Rohtak",
+  "description": "Prof. Dheeraj Sharma, Director of the Indian Institute of Management Rohtak: education, research on business relationships, career dates and the institute's official contact details.",
+  "siteName": "Prof. Dheeraj Sharma",
+  "shareTitle": "Prof. Dheeraj Sharma, Director of IIM Rohtak",
+  "shareDescription": "Education, research on relationships in business, career dates and official contacts.",
+  "shareImage": "/assets/img/og.jpg",
+  "shareImageAlt": "Prof. Dheeraj Sharma, Director of IIM Rohtak, beside his name.",
+  "menuLabel": "Sections",
+  "nav": [
+    {
+      "label": "Profile",
+      "anchor": "profile"
+    },
+    {
+      "label": "Timeline",
+      "anchor": "timeline"
+    },
+    {
+      "label": "Research",
+      "anchor": "research"
+    },
+    {
+      "label": "IIM Rohtak",
+      "anchor": "institute"
+    },
+    {
+      "label": "Roles",
+      "anchor": "roles"
+    },
+    {
+      "label": "Gallery",
+      "anchor": "gallery"
+    },
+    {
+      "label": "Contact",
+      "anchor": "contact"
+    }
+  ],
+  "person": {
+    "name": "Dheeraj Sharma",
+    "honorificPrefix": "Prof.",
+    "jobTitle": "Director",
+    "description": "Marketing scholar. Director of the Indian Institute of Management Rohtak, appointed 10 February 2017.",
+    "worksForName": "Indian Institute of Management Rohtak",
+    "worksForUrl": "https://www.iimrohtak.ac.in",
+    "alumniOf": "Louisiana Tech University",
+    "knowsAbout": [
+      "Marketing",
+      "Marketing channels",
+      "Brand management",
+      "International marketing strategy",
+      "Personal selling",
+      "Business ethics"
+    ],
+    "sameAs": [
+      "https://www.iimrohtak.ac.in/director.php"
+    ]
+  }
+}

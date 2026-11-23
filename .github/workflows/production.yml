@@ -1,0 +1,47 @@
+# Runs after anything reaches production: keeps edits up to date and emails the owner.
+name: Production changed
+
+on:
+  push:
+    branches: [production]
+
+permissions: {}
+
+jobs:
+  sync-edits:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: edits
+          fetch-depth: 0
+      - name: Bring production into edits
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --quiet origin production
+          git merge --no-edit FETCH_HEAD
+          git push origin HEAD:edits
+
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Post to the production log, which emails the owner
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          SERVER: ${{ github.server_url }}
+        run: |
+          title="Production change log"
+          issue=$(gh issue list -R "$REPO" --state open --author "app/github-actions" --search "$title in:title" --json number --jq '.[0].number // empty')
+          [ -z "$issue" ] && issue=$(gh issue create -R "$REPO" --title "$title" --body "Every change to the live site is recorded here." | grep -oE '[0-9]+$')
+          gh issue comment "$issue" -R "$REPO" --body "@$OWNER production changed. By: $ACTOR. Commit: $SERVER/$REPO/commit/$SHA. If you did not approve this, follow the rollback steps in SECURITY.md."

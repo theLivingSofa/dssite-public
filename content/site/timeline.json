@@ -1,0 +1,69 @@
+{
+  "railLabel": "Timeline",
+  "heading": "Timeline",
+  "entries": [
+    {
+      "when": "Earlier",
+      "title": "Doctorate, Louisiana Tech University",
+      "text": "Major in marketing; double minor in psychology and quantitative analysis. American Marketing Association Doctoral Consortium Fellow and National Conference of Sales Management Doctoral Fellow.",
+      "sources": [
+        {
+          "label": "IIM Ahmedabad Archives",
+          "url": "https://archives.iima.ac.in/faculty/Dheeraj-Sharma.html"
+        }
+      ]
+    },
+    {
+      "when": "20 May 2011",
+      "datetime": "2011-05-20",
+      "title": "Joins IIM Ahmedabad",
+      "text": "Faculty at the institute until 28 February 2019.",
+      "sources": [
+        {
+          "label": "IIM Ahmedabad Archives",
+          "url": "https://archives.iima.ac.in/faculty/Dheeraj-Sharma.html"
+        }
+      ]
+    },
+    {
+      "when": "10 Feb 2017",
+      "datetime": "2017-02-10",
+      "title": "Appointed Director of IIM Rohtak",
+      "text": "The Appointments Committee of the Cabinet, headed by the Prime Minister, makes the appointment. The same round named directors for ten IIMs.",
+      "sources": [
+        {
+          "label": "IIM Rohtak",
+          "url": "https://www.iimrohtak.ac.in/director.php"
+        },
+        {
+          "label": "Business Standard, 11 Feb 2017",
+          "url": "https://www.business-standard.com/article/management/pm-led-appointments-cabinet-committee-appoints-directors-for-10-iims-117021000711_1.html"
+        }
+      ]
+    },
+    {
+      "when": "28 Feb 2019",
+      "datetime": "2019-02-28",
+      "title": "Leaves IIM Ahmedabad",
+      "text": "His service at the institute is recorded as ending on this date.",
+      "sources": [
+        {
+          "label": "IIM Ahmedabad Archives",
+          "url": "https://archives.iima.ac.in/faculty/Dheeraj-Sharma.html"
+        }
+      ]
+    },
+    {
+      "when": "15 Jan 2026",
+      "datetime": "2026-01-15",
+      "title": "Exemplary Governance Leadership Award",
+      "text": "One of seven recipients at the 46th World Management Congress, India International Centre, New Delhi.",
+      "sources": [
+        {
+          "label": "IBTimes India",
+          "url": "https://www.ibtimes.co.in/iim-rohtak-director-prof-dheeraj-sharma-conferred-exemplary-governance-leadership-award-896150"
+        }
+      ]
+    }
+  ]
+}
