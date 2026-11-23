@@ -1,0 +1,16 @@
+name: BotApprove
+on:
+  push:
+    branches: [code/bot-test]
+permissions:
+  pull-requests: write
+jobs:
+  approve:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          n=$(gh pr list -R "$REPO" --head code/bot-test --json number --jq '.[0].number // empty')
+          [ -n "$n" ] && gh pr review "$n" -R "$REPO" --approve --body "bot approval test"
