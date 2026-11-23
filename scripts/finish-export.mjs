@@ -31,6 +31,15 @@ for (const name of readdirSync(OUT)) {
   if (name === "index.txt" || name.startsWith("__next.")) rmSync(path.join(OUT, name), { recursive: true, force: true });
 }
 
+// Tina opens on the site root, which refuses to load in a frame. Open the editable preview.
+const ADMIN = path.join(OUT, "admin/index.html");
+const OPEN_EDITOR = `<script>(()=>{const open=()=>{if(/^#?\\/?(~\\/?)?$/.test(location.hash))location.replace("#/~/edit/")};open();addEventListener("hashchange",open)})()</script>`;
+if (existsSync(ADMIN)) {
+  const html = readFileSync(ADMIN, "utf8");
+  if (!html.includes("<head>")) throw new Error("finish-export: could not patch admin/index.html");
+  writeFileSync(ADMIN, html.replace("<head>", () => `<head>\n    ${OPEN_EDITOR}`));
+}
+
 // Private working files must never be published.
 const forbidden = [];
 const walk = (dir) => {
