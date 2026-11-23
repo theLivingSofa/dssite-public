@@ -1,10 +1,11 @@
-# Checks every proposed change and opens the pull request you approve.
-# A bot opens it because GitHub does not let authors approve their own pull requests.
+# Checks every proposed change. Saves from the editor that pass are published automatically.
+# Anything that fails stays off the live site and the owner is emailed.
 name: Review
 
 on:
   push:
     branches: [edits, "code/**"]
+  workflow_dispatch:
   pull_request:
     branches: [production]
 
@@ -57,11 +58,12 @@ jobs:
 
   open-pull-request:
     needs: validate
-    if: ${{ always() && github.event_name == 'push' }}
+    if: ${{ always() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      contents: read
+      actions: write
+      contents: write
       pull-requests: write
     steps:
       - name: Open a pull request if there is none
@@ -69,18 +71,36 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           BRANCH: ${{ github.ref_name }}
-          OWNER: ${{ github.repository_owner }}
-          PREVIEW: ${{ vars.EDITS_PREVIEW_URL }}
         run: |
           open=$(gh pr list -R "$REPO" --head "$BRANCH" --base production --state open --json number --jq '.[0].number // empty')
           [ -n "$open" ] && exit 0
           ahead=$(gh api "repos/$REPO/compare/production...$BRANCH" --jq .ahead_by)
           [ "$ahead" = "0" ] && exit 0
-          body="@$OWNER, these changes are waiting for your approval. Nothing is live yet."
-          [ -n "$PREVIEW" ] && [ "$BRANCH" = "edits" ] && body="$body
-
-          Private preview: $PREVIEW"
-          body="$body
-
-          Check **Files changed**, then approve and merge to publish."
+          body="Changes from \`$BRANCH\`. Saves from the editor publish automatically once the checks pass."
           gh pr create -R "$REPO" --base production --head "$BRANCH" --title "Review changes from $BRANCH" --body "$body"
+
+      - name: Publish a save that passed the checks
+        if: ${{ github.ref_name == 'edits' && needs.validate.result == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          number=$(gh pr list -R "$REPO" --head edits --base production --state open --json number --jq '.[0].number // empty')
+          [ -z "$number" ] && exit 0
+          # A newer save has its own run, which will publish it.
+          head=$(gh pr view "$number" -R "$REPO" --json headRefOid --jq .headRefOid)
+          [ "$head" = "$GITHUB_SHA" ] || exit 0
+          gh pr merge "$number" -R "$REPO" --merge --match-head-commit "$GITHUB_SHA"
+          # Merges made with this token do not start other workflows on their own.
+          gh workflow run production.yml -R "$REPO" --ref production
+
+      - name: Tell the owner a save could not be published
+        if: ${{ github.ref_name == 'edits' && needs.validate.result != 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          number=$(gh pr list -R "$REPO" --head edits --base production --state open --json number --jq '.[0].number // empty')
+          [ -n "$number" ] && gh pr comment "$number" -R "$REPO" --body "@$OWNER this save failed the checks and was **not published**. The live site is unchanged. Details: $RUN"

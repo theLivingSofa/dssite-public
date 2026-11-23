@@ -1,31 +1,32 @@
 # Security
 
-This site is a profile of a real public figure. A fake, defamatory or vandalised edit is the main threat, so the setup assumes an edit can be malicious until a person has approved it.
+This site is a profile of a real public figure. A fake, defamatory or vandalised edit is the main threat, so the setup limits who can edit, blocks dangerous content automatically, and alerts the owner to every change.
 
 No setup is unhackable. [Residual risks](#residual-risks) lists what can still go wrong.
 
 ## How a change goes live
 
 ```text
-Editor at /admin  →  saved to `edits`  →  checks run  →  bot opens a pull request
-                                                               │
-Live site  ←  Cloudflare deploys  ←  `production`  ←  owner approves and merges
+Editor at /admin  →  AI proofreader suggests fixes  →  saved to `edits`  →  automatic checks
+                                                                                │
+Live site  ←  Cloudflare deploys  ←  `production`  ←  published automatically if they pass
 ```
 
-Nothing reaches the live site until the owner approves a pull request on GitHub.
+There is no human review before publishing. The owner gets an email for every published change. The AI proofreader only suggests fixes and has no power to save or publish.
 
 ## Threat model
 
 | Who | What they would try | What stops them |
 |---|---|---|
 | Random vandal | Open `/admin` and edit | Cloudflare Access email PIN, then TinaCloud login. Only invited people can save |
-| Random vandal | Push to GitHub or open a pull request | No write access. `production` needs the owner's approval |
+| Random vandal | Push to GitHub or open a pull request | No write access. Only saves on `edits` publish automatically |
+| Random vandal | Run up the AI quota | The proofreader only answers people who passed the Access login |
+| Anyone | Trick the AI with text inside an edit | The AI cannot save or publish. Its suggestions are filtered, and an editor must accept them |
 | Random vandal | Find a leaked key | No secrets in the repo or browser files. The only build token is read-only |
-| Someone who steals an editor's login | Publish fake content | Their edit stops at `edits`. The owner sees it in a pull request and can reject it |
+| Someone who steals an editor's login | Publish fake content | **Not prevented.** They would need the editor's email PIN and Tina login. The owner is emailed about the change and can roll it back |
 | Someone who steals an editor's login | Inject scripts or hidden links | Text is escaped, unsafe links are removed, and the content gate fails the check |
 | Someone who steals an editor's login | Upload a disguised file | Only real JPG, PNG and WebP files under 8 MB pass |
 | Malicious collaborator | Quietly change code from the edit branch | The check fails if `edits` touches anything except content and photos |
-| Malicious collaborator | Change content after it was approved | A new commit dismisses the approval |
 | Someone who steals the owner's GitHub | Disable protection and publish | **Not fully preventable.** 2FA reduces the risk, and the daily check and change log help detect it |
 | Someone who steals the owner's Cloudflare | Change what is deployed | **Not fully preventable.** 2FA reduces the risk, and the daily check helps detect it |
 
@@ -38,22 +39,32 @@ Nothing reaches the live site until the owner approves a pull request on GitHub.
 - **Search engines:** `/admin` and `/edit` send `noindex` headers, are disallowed in `robots.txt`, and are not linked from the site.
 - **2FA:** required on GitHub, Cloudflare and the email inbox that receives the PIN.
 
-**Invite an editor:** TinaCloud project > **Collaborators** > invite their email as **Editor**. Then add the same email to the Access policy in Cloudflare. The free plan allows 2 users.
+**Invite an editor:** TinaCloud project > **Collaborators** > invite their email as **Editor**. Then add the same email to the Access policy in Cloudflare. The free plan allows 2 users. Never share your own login: it is tied to your GitHub account, which controls everything.
 
 **Remove an editor:** remove them from TinaCloud **Collaborators** and from the Access policy, then in Zero Trust revoke their active session.
 
-### 2. Approval before anything goes live
+### 2. Automatic checks before anything goes live
 
 - `edits` is where TinaCMS saves. It is the GitHub default branch because Tina writes uploaded photos to the default branch and cannot commit them to a protected one.
-- `production` is what Cloudflare deploys. It requires a pull request, an approval from the code owner, and a passing check. Direct pushes, force pushes and deletion are blocked, and the rules apply to admins.
-- A bot opens the pull request because GitHub does not let authors approve their own. The bot cannot approve in the owner's place, because only a code owner's approval counts.
+- `production` is what Cloudflare deploys. It only accepts pull requests that pass the content check. Direct pushes, force pushes and deletion are blocked, and the rules apply to admins.
+- A save that passes is merged automatically. A save that fails stays off the live site and the owner is emailed.
 - Cloudflare preview links are private through the Pages access policy. That policy does **not** cover the main address, which is why `/admin` has its own Access application.
+
+**To turn human approval back on:** in GitHub, open **Settings > Branches**, edit the `production` rule, and require 1 approval. Then remove the "Publish a save" step from `.github/workflows/review.yml`.
+
+### AI proofreader
+
+- On Save, only the changed text is sent to `/api/proofread`, a Cloudflare Function that requires a valid Access login.
+- It uses Gemini (`gemini-flash-lite-latest`) on Google's free tier, then Cloudflare Workers AI's free allowance if Gemini fails. If both fail, the save continues unchecked.
+- Suggestions that would change a name, number, negation or meaning are dropped. Nothing is changed unless the editor accepts it.
+- **To keep it free:** create the Gemini key in a project with no billing account, and stay on the Workers Free plan. At a free limit, requests stop instead of being charged.
 
 ### 3. Secrets
 
 - The repo and browser files contain no secrets. `.env` files are ignored by Git.
 - `NEXT_PUBLIC_TINA_CLIENT_ID` is a public identifier.
 - `TINA_TOKEN` is a **read-only** content token, stored as a Cloudflare secret and used only during the build. It does not appear in the deployed files.
+- `GEMINI_API_KEY` is a Cloudflare secret used only by the server-side function. It never reaches the browser.
 - No Cloudflare API token exists, because the Git integration deploys without one. That is safer than a scoped token.
 - GitHub secret scanning, push protection and Dependabot alerts are on.
 
@@ -103,7 +114,7 @@ git revert -m 1 MERGE_COMMIT_ID
 git push -u origin code/rollback
 ```
 
-A bot opens a pull request. Approve and merge it. Use a new branch name each time.
+A bot opens a pull request. Merge it. Use a new branch name each time.
 
 **Step 3: clean `edits`.** The merge copies the fix into `edits` automatically. Check `/admin` shows the correct content.
 
@@ -141,6 +152,7 @@ Secure it first. It receives Access PINs and password resets for everything else
 | Key | Where | How to rotate |
 |---|---|---|
 | `TINA_TOKEN` | TinaCloud **Tokens**, Cloudflare secret | Create a new read-only token, update the Cloudflare secret, redeploy, delete the old token |
+| `GEMINI_API_KEY` | Google AI Studio, Cloudflare secret | Create a new key, update the Cloudflare secret, redeploy, delete the old key |
 | `NEXT_PUBLIC_TINA_CLIENT_ID` | TinaCloud **Overview** | Public, so no rotation needed |
 | GitHub sign-in on this computer | GitHub **Settings > Applications** | Revoke, then sign in again |
 | Access sessions | Zero Trust | Revoke the user's sessions |
@@ -177,19 +189,31 @@ Do these in order. Each one needs your own login.
 - [ ] **Settings > General > Enable access policy** on the Pages project. This makes preview links private.
 - [ ] In **Zero Trust**, choose the **Free** plan. Cloudflare may ask for a card even though the plan is $0. Stay under 50 users.
 - [ ] **Integrations > Identity providers > Add > One-time PIN.**
-- [ ] **Access > Applications > Add > Self-hosted.** Add your `pages.dev` address twice, with the paths `admin` and `edit`. Allow only your email, using One-time PIN.
-- [ ] When you connect a custom domain, add the same two paths for it.
+- [ ] **Access > Applications > Add > Self-hosted.** Add your `pages.dev` address three times, with the paths `admin`, `edit` and `api/proofread`. Allow only your email and the editor's, using One-time PIN.
+- [ ] When you connect a custom domain, add the same three paths for it.
 
-**5. Turn on your alerts**
+**5. Turn on the free proofreader**
+
+- [ ] At [aistudio.google.com/apikey](https://aistudio.google.com/apikey), create a key. **Don't add billing or a card.**
+- [ ] In the Pages project, add `GEMINI_API_KEY` as a **Secret**.
+- [ ] Add `ACCESS_TEAM_DOMAIN` (like `your-team.cloudflareaccess.com`) and `ACCESS_AUD` (the **Application Audience** tag of your Access application).
+- [ ] Under **Settings > Bindings > Add > Workers AI**, name the binding `AI`. This is the free backup.
+- [ ] Redeploy.
+
+**6. Turn on your alerts**
 
 - [ ] GitHub **Settings > Notifications**: turn on email for **Participating, @mentions and custom**.
 - [ ] Open this repo and set **Watch** to **Participating and @mentions**.
 
-**6. Your routine**
+**7. Hand over**
 
-- [ ] Review each pull request's **Files changed** before approving.
-- [ ] Reject anything you don't recognise.
+- [ ] Invite the new editor in TinaCloud as **Editor**, using their own email.
+- [ ] Add their email to the Cloudflare Access policy.
+- [ ] Send them [EDITOR-GUIDE.md](EDITOR-GUIDE.md).
+- [ ] Turn on **auto-renew** for the domain, with a payment method that will not expire soon.
 - [ ] Remove the old Netlify site once this one is live.
+
+**After that:** you only need to act if an email says a save failed, the live site check failed, or a change looks wrong.
 
 ---
 
@@ -198,12 +222,14 @@ Do these in order. Each one needs your own login.
 - **Your GitHub account is the master key.** Whoever controls it can turn off every protection. 2FA is the most important step on this page.
 - **Your email inbox can open the first gate.** Access PINs go there. An attacker would still need a Tina login to save.
 - **Cloudflare can bypass Git.** Someone in your Cloudflare account can change what is deployed.
-- **You can approve a bad edit.** The gate relies on you reading the change. A source link proves that a link exists, not that it supports the claim.
-- **Unapproved edits are publicly visible on GitHub.** This repo is public, so anything saved to `edits` can be read there before approval, although it is not on the site.
-- **Uploaded photos can be public before approval.** They are stored on Tina's media service and the `edits` branch.
+- **Nobody reviews a change before it is public.** The checks and the AI catch dangerous content and typos, not false content. A stolen editor login could publish a false claim until someone notices. A source link proves that a link exists, not that it supports the claim.
+- **The daily check compares the site with `production`.** It catches tampering with the deployed site, but not a bad edit that was published normally. The change email covers that.
+- **The proofreader can be wrong or unavailable.** Free models and limits can change. Text sent on Google's free tier may be used to improve its products, so never put private information in a draft.
+- **All edits are publicly visible on GitHub.** This repo is public, so every save and its history can be read there.
 - **Git history is permanent.** Once something is in this public repo, assume it has been copied, even after removal.
 - **The photos belong to IIM Rohtak.** They are published here with credit, and no licence is stated on the institute's site.
 - **The editor has a looser policy than the public page.** `/admin` needs inline scripts to work, so it relies on Access and Tina's login.
 - **One dependency advisory is open.** Zod, used inside Tina's editor tools, has a memory-exhaustion issue with no fix compatible with Tina yet. It does not ship on the public page.
-- **The daily check is not instant.** A problem could be live for up to a day. GitHub also pauses scheduled workflows after 60 days without repository activity, so re-enable it if that happens.
+- **The daily check is not instant.** A problem could be live for up to a day. GitHub pauses scheduled workflows after 60 days without repository activity. The check tries to keep itself switched on, but if the runs stop, re-enable it under **Actions**.
+- **The domain must be renewed.** If it lapses, the site goes offline and someone else could buy the address.
 - **Third parties can change.** GitHub, TinaCloud or Cloudflare can have outages, security incidents, or new plan limits.
