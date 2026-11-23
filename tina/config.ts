@@ -2,8 +2,8 @@ import { defineConfig } from "tinacms";
 import { IMAGE_MIME_TYPES } from "../lib/content-rules.mjs";
 import { collections } from "./collections";
 
-// The editor always reads and saves on `edits`. Nothing reaches `production`
-// without an approved pull request.
+// The editor always reads and saves on `edits`. Saves reach `production`
+// only after the content checks pass.
 const branch = "edits";
 
 export default defineConfig({

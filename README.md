@@ -12,12 +12,9 @@ A one-page profile you can edit from the browser, without touching code.
 1. Open `https://your-site/admin` and log in.
 2. Click anything on the page. Its field opens in the left sidebar.
 3. Type. The preview changes as you type.
-4. Press **Save**. Your change goes to the `edits` branch. **It is not live yet.**
-5. A pull request appears on GitHub, and you get an email.
-6. Open the private preview and check the change.
-7. On the pull request, review **Files changed**, then **Approve** and **Merge**.
+4. Press **Save**. A free AI proofreader points out likely spelling or grammar mistakes. Choose **Fix it and save** or **Save anyway**.
 
-The live site updates a minute or two after the merge. Every change is kept in GitHub history, and [SECURITY.md](SECURITY.md) explains how to roll back.
+Automatic checks run, and the change goes live about a minute or two later. If a save fails the checks, the live site stays as it was and the owner gets an email. Every change is kept in GitHub history, and [SECURITY.md](SECURITY.md) explains how to roll back.
 
 ---
 
@@ -65,7 +62,7 @@ Photos must be JPG, PNG or WebP, under 8 MB. They are resized and given the site
 
 **These are edited in the sidebar, because they have nothing visible to click:** photo descriptions (alt text), link addresses, machine-readable dates, and everything in **Site settings and sharing**.
 
-**Before you approve:** you can reject a change by closing the pull request. To undo something already live, follow the rollback steps in [SECURITY.md](SECURITY.md).
+**To undo something already live:** follow the rollback steps in [SECURITY.md](SECURITY.md).
 
 ## Free-plan limits
 
@@ -76,8 +73,8 @@ Photos must be JPG, PNG or WebP, under 8 MB. They are resized and given the site
 
 - **`/admin` says the URL is not allowed:** add that exact address to **Site URLs** in TinaCloud.
 - **Build fails with a TinaCloud error:** check both environment variables in Cloudflare, then retry the deployment.
-- **Saved, but the site hasn't changed:** saves wait for your approval. Check the open pull request, then the latest build under **Deployments** in Cloudflare.
-- **The pull request check failed:** open **Details** on the check. It names the field to fix.
+- **Saved, but the site hasn't changed:** the save may have failed the checks. Open the repository's **Pull requests**, then check the latest build under **Deployments** in Cloudflare.
+- **A check failed:** open **Details** on the check. It names the field to fix.
 - **WhatsApp shows an old preview:** it caches links. Share the link with `?v=2` on the end.
 
 ## For developers
@@ -105,6 +102,8 @@ The site runs at http://localhost:3000 and the editor at http://localhost:3000/a
 | `lib/content-rules.mjs` | Content rules and the fixed footer notice |
 | `scripts/validate-content.mjs` | The content gate |
 | `scripts/check-live.mjs` | Daily live-site check |
+| `functions/api/proofread.js` | Free AI proofreader, server side |
+| `tina/proofread.ts` | The proofreading message in the editor |
 | `public/_headers` | Security headers |
 
 Only the build output reaches the live site. The build stops with an error if a Markdown, Python or `.env` file ends up in it.

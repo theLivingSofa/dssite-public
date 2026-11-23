@@ -1,5 +1,6 @@
 import type { Collection, TinaField } from "tinacms";
 import { IMAGE_EXTENSIONS, fieldError } from "../lib/content-rules.mjs";
+import { proofreadBeforeSave } from "./proofread";
 
 // Every section is one JSON file in content/site. All of them render on one page,
 // and the editor previews that page at /edit/.
@@ -12,6 +13,7 @@ const section = (name: string, label: string, fields: TinaField[]): Collection =
   ui: {
     allowedActions: { create: false, delete: false },
     router: () => "/edit/",
+    beforeSubmit: proofreadBeforeSave,
   },
   fields,
 });
