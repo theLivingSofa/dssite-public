@@ -10,7 +10,7 @@ const base = process.env.LIVE_URL?.trim();
 const ATTEMPTS = Number(process.env.CHECK_ATTEMPTS ?? 3);
 const RETRY_MS = 120_000;
 const MAX_UNEXPECTED_CHARS = 240;
-const SKIP_KEYS = new Set([...URL_KEYS, ...IMAGE_KEYS, "href", "anchor", "datetime", "updatedDate", "alt", "portraitAlt", "shareImageAlt",
+const SKIP_KEYS = new Set([...URL_KEYS, ...IMAGE_KEYS, "href", "anchor", "railLabel", "datetime", "updatedDate", "alt", "portraitAlt", "shareImageAlt",
   "description", "shareDescription", "title", "siteName", "shareTitle", "person"]);
 const KEEP_IN = new Set(["timeline", "research"]);
 const SOURCE_KEYS = new Set(["sources", "sourcesLabel", "sourcesHeading", "sourceLabel", "sourcePrefix", "portraitCredit", "credit"]);

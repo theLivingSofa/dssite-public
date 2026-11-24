@@ -11,7 +11,7 @@ export type FieldFn = (object: never, property: string, index?: number) => Recor
 export const noField: FieldFn = () => undefined;
 
 type Editable = { field: FieldFn };
-type Link = { label?: string | null; url?: string | null } | null;
+type Link = { label?: string | null; url?: string | null; keepSource?: boolean | null } | null;
 
 const GALLERY_SLOTS = [
   { slot: "a", sizes: "(min-width: 900px) 62vw, 100vw", target: 800 },
@@ -58,8 +58,12 @@ function Bare({ field, object, property, children }: Editable & { object: unknow
   return props ? <span {...props}>{children}</span> : <>{children}</>;
 }
 
-function Links({ items, separator, field }: Editable & { items?: (Link | null)[] | null; separator: string }) {
-  return kept(items as Link[] | null | undefined, "label" as never).map((link, i) => (
+// With sources hidden, only the links switched on one by one still show.
+const shownLinks = (items: (Link | null)[] | null | undefined, all: boolean) =>
+  kept(items as Link[] | null | undefined, "label" as never).filter((link) => all || Boolean(link?.keepSource));
+
+function Links({ items, separator, field, all }: Editable & { items?: (Link | null)[] | null; separator: string; all: boolean }) {
+  return shownLinks(items, all).map((link, i) => (
     <Fragment key={i}>
       {i > 0 && separator}
       <a {...linkTo(link?.url)} {...mark(field, link, "label")}>{link?.label}</a>
@@ -67,23 +71,24 @@ function Links({ items, separator, field }: Editable & { items?: (Link | null)[]
   ));
 }
 
-const hasLinks = (items?: (Link | null)[] | null) => (items ?? []).some((link) => filled(link?.label));
+const hasLinks = (items: (Link | null)[] | null | undefined, all: boolean) => shownLinks(items, all).length > 0;
 
-function Rail({ number, section, field }: Editable & { number: string; section: { railLabel?: string | null } }) {
+// The section number, with the section heading under it in the margin.
+function Rail({ number, children }: { number: string; children?: ReactNode }) {
   return (
     <div className="rail">
       <span className="rail__num" aria-hidden="true">{number}</span>
-      {filled(section.railLabel) && <span className="rail__label sc" {...mark(field, section, "railLabel")}>{section.railLabel}</span>}
+      {children}
     </div>
   );
 }
 
-function SourceLine({ section, field }: Editable & { section: { sourcesLabel?: string | null; sources?: (Link | null)[] | null } }) {
-  if (!hasLinks(section.sources)) return null;
+function SourceLine({ section, field, all }: Editable & { all: boolean; section: { sourcesLabel?: string | null; sources?: (Link | null)[] | null } }) {
+  if (!hasLinks(section.sources, all)) return null;
   return (
     <p className="srcline">
       <Bare field={field} object={section} property="sourcesLabel">{section.sourcesLabel}</Bare>{" "}
-      <Links items={section.sources} separator="; " field={field} />.
+      <Links items={section.sources} separator="; " field={field} all={all} />.
     </p>
   );
 }
@@ -110,22 +115,22 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
   const columns = (contact.columns ?? [])
     .map((column) => ({ column, rows: kept(column?.rows, "label", "value") }))
     .filter(({ column, rows }) => filled(column?.heading) || rows.length > 0);
-  const footerSources = showSources ? kept(footer.sources, "label") : [];
+  const footerSources = kept(footer.sources, "label").filter((source) => showSources || Boolean(source.keepSource));
 
   const researchMain = filled(research.lead) || areas.length > 0;
   const footerNotice = filled(footer.heading, footer.linkLabel, footer.notice, footer.updatedText);
 
   // A section with nothing left in it disappears, and its menu link goes with it.
   const visible: Record<string, boolean> = {
-    profile: filled(profile.railLabel, profile.heading, profile.lead) || paragraphs.length > 0,
-    timeline: filled(timeline.railLabel, timeline.heading) || entries.length > 0,
+    profile: filled(profile.heading, profile.lead) || paragraphs.length > 0,
+    timeline: filled(timeline.heading) || entries.length > 0,
     research:
-      filled(research.railLabel, research.heading, research.papersHeading, research.booksHeading) ||
+      filled(research.heading, research.papersHeading, research.booksHeading) ||
       researchMain || notes.length > 0 || papers.length > 0 || books.length > 0,
-    institute: filled(institute.railLabel, institute.heading) || ledgers.length > 0,
-    roles: filled(roles.railLabel, roles.heading) || roleRows.length > 0,
-    gallery: filled(gallery.railLabel, gallery.heading) || photos.length > 0,
-    contact: filled(contact.railLabel, contact.heading, contact.officialLabel) || columns.length > 0,
+    institute: filled(institute.heading) || ledgers.length > 0,
+    roles: filled(roles.heading) || roleRows.length > 0,
+    gallery: filled(gallery.heading) || photos.length > 0,
+    contact: filled(contact.heading, contact.officialLabel) || columns.length > 0,
   };
   const numbers = Object.fromEntries(
     Object.keys(visible).filter((name) => visible[name]).map((name, i) => [name, String(i + 1).padStart(2, "0")]),
@@ -163,7 +168,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
                 alt={hero.portraitAlt ?? ""}
                 {...f(hero, "portrait")}
               />
-              {showSources && filled(hero.portraitCredit) && <figcaption><span {...f(hero, "portraitCredit")}>{hero.portraitCredit}</span></figcaption>}
+              {(showSources || Boolean(hero.keepCredit)) && filled(hero.portraitCredit) && <figcaption><span {...f(hero, "portraitCredit")}>{hero.portraitCredit}</span></figcaption>}
             </figure>
           )}
 
@@ -189,14 +194,15 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
 
         {visible.profile && (
           <section id="profile" className="sec wrap" {...labelled("h-profile", profile.heading)}>
-            <Rail number={numbers.profile} section={profile} field={field} />
+            <Rail number={numbers.profile}>
+              {filled(profile.heading) && <h2 id="h-profile" className="h2 reveal" {...f(profile, "heading")}>{profile.heading}</h2>}
+            </Rail>
             <div className="body reveal">
-              {filled(profile.heading) && <h2 id="h-profile" className="h2" {...f(profile, "heading")}>{profile.heading}</h2>}
               {filled(profile.lead) && <p className="lead fill" {...f(profile, "lead")}>{profile.lead}</p>}
               {paragraphs.map((paragraph, i) => (
                 <p key={i} {...f(paragraph, "text")}><Inline text={paragraph.text} /></p>
               ))}
-              {showSources && <SourceLine section={profile} field={field} />}
+              <SourceLine section={profile} field={field} all={showSources} />
             </div>
           </section>
         )}
@@ -220,10 +226,9 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
           <section id="timeline" className="tl" {...labelled("h-timeline", timeline.heading)}>
             <div className="tl__pin">
               <div className="tl__intro wrap">
-                <Rail number={numbers.timeline} section={timeline} field={field} />
-                <div className="body body--wide">
+                <Rail number={numbers.timeline}>
                   {filled(timeline.heading) && <h2 id="h-timeline" className="h2 reveal" {...f(timeline, "heading")}>{timeline.heading}</h2>}
-                </div>
+                </Rail>
               </div>
               <div className="tl__list wrap">
                 <ol className="timeline">
@@ -233,7 +238,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
                       <div>
                         {filled(entry.title) && <h3 className="h3" {...f(entry, "title")}>{entry.title}</h3>}
                         {filled(entry.text) && <p {...f(entry, "text")}>{entry.text}</p>}
-                        {showSources && hasLinks(entry.sources) && <p className="src"><Links items={entry.sources} separator=" · " field={field} /></p>}
+                        {hasLinks(entry.sources, showSources) && <p className="src"><Links items={entry.sources} separator=" · " field={field} all={showSources} /></p>}
                       </div>
                     </li>
                   ))}
@@ -246,9 +251,10 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
 
         {visible.research && (
           <section id="research" className="sec wrap" {...labelled("h-research", research.heading)}>
-            <Rail number={numbers.research} section={research} field={field} />
-            <div className="body body--wide">
+            <Rail number={numbers.research}>
               {filled(research.heading) && <h2 id="h-research" className="h2 reveal" {...f(research, "heading")}>{research.heading}</h2>}
+            </Rail>
+            <div className="body body--wide">
               {(researchMain || notes.length > 0) && (
                 <div className="research">
                   {researchMain && (
@@ -264,7 +270,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
                           ))}
                         </dl>
                       )}
-                      {showSources && <SourceLine section={research} field={field} />}
+                      <SourceLine section={research} field={field} all={showSources} />
                     </div>
                   )}
 
@@ -322,9 +328,10 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
 
         {visible.institute && (
           <section id="institute" className="sec sec--deep wrap" {...labelled("h-institute", institute.heading)}>
-            <Rail number={numbers.institute} section={institute} field={field} />
-            <div className="body body--wide">
+            <Rail number={numbers.institute}>
               {filled(institute.heading) && <h2 id="h-institute" className="h2 reveal" {...f(institute, "heading")}>{institute.heading}</h2>}
+            </Rail>
+            <div className="body body--wide">
               {ledgers.map(({ ledger, rows }, i) => (
                 <div className="ledger reveal" key={i}>
                   {filled(ledger?.heading) && <h3 className="ledger__head sc" {...f(ledger, "heading")}>{ledger?.heading}</h3>}
@@ -334,7 +341,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
                         <div key={j}>
                           {filled(row.label) && <dt {...f(row, "label")}>{row.label}</dt>}
                           {filled(row.text) && <dd {...f(row, "text")}>{row.text}</dd>}
-                          {showSources && filled(row.sourceLabel) && <dd className="src"><a {...linkTo(row.sourceUrl)} {...f(row, "sourceLabel")}>{row.sourceLabel}</a></dd>}
+                          {(showSources || Boolean(row.keepSource)) && filled(row.sourceLabel) && <dd className="src"><a {...linkTo(row.sourceUrl)} {...f(row, "sourceLabel")}>{row.sourceLabel}</a></dd>}
                         </div>
                       ))}
                     </dl>
@@ -347,9 +354,10 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
 
         {visible.roles && (
           <section id="roles" className="sec wrap" {...labelled("h-roles", roles.heading)}>
-            <Rail number={numbers.roles} section={roles} field={field} />
-            <div className="body body--wide">
+            <Rail number={numbers.roles}>
               {filled(roles.heading) && <h2 id="h-roles" className="h2 reveal" {...f(roles, "heading")}>{roles.heading}</h2>}
+            </Rail>
+            <div className="body body--wide">
               {roleRows.length > 0 && (
                 <div className="roles reveal">
                   <dl>
@@ -360,7 +368,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
                       </div>
                     ))}
                   </dl>
-                  {showSources && <SourceLine section={roles} field={field} />}
+                  <SourceLine section={roles} field={field} all={showSources} />
                 </div>
               )}
             </div>
@@ -369,14 +377,13 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
 
         {visible.gallery && (
           <section id="gallery" className="sec sec--deep wrap gallery" {...labelled("h-gallery", gallery.heading)}>
-            <Rail number={numbers.gallery} section={gallery} field={field} />
-            <div className="body body--wide">
+            <Rail number={numbers.gallery}>
               {filled(gallery.heading) && <h2 id="h-gallery" className="h2 reveal" {...f(gallery, "heading")}>{gallery.heading}</h2>}
-            </div>
+            </Rail>
 
             {photos.map((item, i) => {
               const { slot, sizes, target } = GALLERY_SLOTS[i];
-              const credit = showSources && filled(item.credit);
+              const credit = (showSources || Boolean(item.keepCredit)) && filled(item.credit);
               return (
                 <figure className={`g g--${slot} reveal`} key={i}>
                   {filled(item.image) && (
@@ -406,9 +413,10 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
 
         {visible.contact && (
           <section id="contact" className="sec wrap" {...labelled("h-contact", contact.heading)}>
-            <Rail number={numbers.contact} section={contact} field={field} />
-            <div className="body body--wide">
+            <Rail number={numbers.contact}>
               {filled(contact.heading) && <h2 id="h-contact" className="h2 reveal" {...f(contact, "heading")}>{contact.heading}</h2>}
+            </Rail>
+            <div className="body body--wide">
               {columns.length > 0 && (
                 <div className="contact reveal">
                   {columns.map(({ column, rows }, i) => (
@@ -432,7 +440,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
                           ))}
                         </ul>
                       )}
-                      {showSources && filled(column?.sourceLabel) && (
+                      {(showSources || Boolean(column?.keepSource)) && filled(column?.sourceLabel) && (
                         <p className="src">
                           <Bare field={field} object={contact} property="sourcePrefix">{contact.sourcePrefix}</Bare>{" "}
                           <a {...linkTo(column?.sourceUrl)} {...f(column, "sourceLabel")}>{column?.sourceLabel}</a>

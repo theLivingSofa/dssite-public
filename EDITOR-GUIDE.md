@@ -48,6 +48,8 @@ To delete a whole item, such as a timeline entry, paper or photo, open its list 
 
 Open **11 Site settings and sharing** and turn on **Hide sources and photo credits**. Press **Save draft**, then **Publish**. The lines stay saved, so turning the switch off brings them back.
 
+To keep a few while the rest are hidden, click that source or credit and turn on **Show even when sources are hidden**.
+
 To change the statement in the dark footer, open **10 Footer** and edit **Footer notice**.
 
 ## Good to know
