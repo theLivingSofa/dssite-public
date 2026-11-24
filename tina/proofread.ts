@@ -1,5 +1,5 @@
 import { fieldError } from "../lib/content-rules.mjs";
-import { applyManualEdits, applySuggestions, cleanSuggestions, collectChanges } from "../lib/proofread-rules.mjs";
+import { applyManualEdits, applySuggestions, cleanSuggestions, collectChanges, replaceOnce } from "../lib/proofread-rules.mjs";
 
 type Suggestion = { id: number; original: string; replacement: string; reason: string };
 
@@ -22,7 +22,7 @@ type Item = { id: number; key: string; path: (string | number)[]; text: string }
 type Decision = { chosen: Suggestion[]; edits?: Record<number, string> };
 
 const withFixes = (item: Item, fixes: Suggestion[]) =>
-  fixes.filter(({ id }) => id === item.id).reduce((text, fix) => text.replace(fix.original, fix.replacement), item.text);
+  fixes.filter(({ id }) => id === item.id).reduce((text, fix) => replaceOnce(text, fix.original, fix.replacement), item.text);
 
 // Resolves with the fixes the editor kept ticked, or with text they corrected by hand.
 function askEditor(items: Item[], suggestions: Suggestion[]) {
