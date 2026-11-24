@@ -127,7 +127,11 @@ const walk = (dir) =>
   });
 for (const file of existsSync(MEDIA) ? walk(MEDIA) : []) {
   const where = path.relative(ROOT, file);
-  if (path.basename(file) === ".DS_Store") continue;
+  if (path.basename(file) === ".DS_Store") {
+    // macOS adds these on a laptop. Git ignores them, so one in a checked change is suspicious.
+    if (process.env.CI) fail(where, "is not an allowed file");
+    continue;
+  }
   const extension = path.extname(file).slice(1).toLowerCase();
   if (path.dirname(path.relative(MEDIA, file)) === "fonts" && FONT_EXTENSIONS.includes(extension)) {
     const problem = fontBytesError(readFileSync(file), extension);

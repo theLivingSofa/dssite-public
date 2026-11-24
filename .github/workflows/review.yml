@@ -72,7 +72,8 @@ jobs:
           REPO: ${{ github.repository }}
           BRANCH: ${{ github.ref_name }}
         run: |
-          open=$(gh pr list -R "$REPO" --head "$BRANCH" --base production --state open --json number --jq '.[0].number // empty')
+          # Name the owner too, because a fork can use the same branch name.
+          open=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f base=production -f head="${REPO%%/*}:$BRANCH" --jq '.[0].number // empty')
           [ -n "$open" ] && exit 0
           ahead=$(gh api "repos/$REPO/compare/production...$BRANCH" --jq .ahead_by)
           [ "$ahead" = "0" ] && exit 0
@@ -87,7 +88,7 @@ jobs:
         run: |
           # Publish sends one commit per section. Wait, so only the last one deploys.
           sleep 60
-          number=$(gh pr list -R "$REPO" --head edits --base production --state open --json number --jq '.[0].number // empty')
+          number=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f base=production -f head="${REPO%%/*}:edits" --jq '.[0].number // empty')
           [ -z "$number" ] && exit 0
           # A newer save has its own run, which will publish it.
           head=$(gh pr view "$number" -R "$REPO" --json headRefOid --jq .headRefOid)
@@ -104,5 +105,5 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          number=$(gh pr list -R "$REPO" --head edits --base production --state open --json number --jq '.[0].number // empty')
+          number=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f base=production -f head="${REPO%%/*}:edits" --jq '.[0].number // empty')
           [ -n "$number" ] && gh pr comment "$number" -R "$REPO" --body "@$OWNER this save failed the checks and was **not published**. The live site is unchanged. Details: $RUN"
