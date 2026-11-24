@@ -79,6 +79,8 @@ function FontControl({ kind, input, form, deletable }: FieldProps & { kind: Kind
   const overrideName = `${input.name}Font`;
   const [message, setMessage] = React.useState("");
   const [undoAll, setUndoAll] = React.useState<PendingAll | null>(null);
+  // The last "All" change saved as a draft, so a mistaken click can be undone.
+  const [lastAll, setLastAll] = React.useState<(PendingAll & { saved: TinaForm[] }) | null>(null);
   const [saving, setSaving] = React.useState(false);
   const { all } = FONT_KINDS[kind];
   // Remembers deleted text, so Restore still works after Save draft.
@@ -202,6 +204,7 @@ function FontControl({ kind, input, form, deletable }: FieldProps & { kind: Kind
       const ready = others.filter((item) => undoAll.clean.includes(item));
       await target.submit();
       for (const item of ready) await item.submit();
+      setLastAll({ ...undoAll, saved: ready });
       setUndoAll(null);
       setMessage(
         ready.length < others.length
@@ -210,6 +213,26 @@ function FontControl({ kind, input, form, deletable }: FieldProps & { kind: Kind
       );
     } catch {
       setMessage("That did not save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Puts back the fonts from before the last "All" change and saves that as a draft.
+  const undoLastAll = async () => {
+    const target = settingsForm();
+    if (!target || !lastAll) return;
+    setSaving(true);
+    try {
+      lastAll.cleared.forEach(({ form: item, name, value }) => item.finalForm.change(name, value));
+      setAll(target, fontChoice(lastAll.previous));
+      await target.submit();
+      const waiting = lastAll.saved.filter((item) => !item.finalForm.getState().pristine);
+      for (const item of waiting) await item.submit();
+      setLastAll(null);
+      setMessage("Undone. The earlier fonts are back.");
+    } catch {
+      setMessage("That did not undo. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -242,8 +265,9 @@ function FontControl({ kind, input, form, deletable }: FieldProps & { kind: Kind
           </>
         ) : (
           <>
-            <button type="button" style={buttonStyle(false)} onClick={applyHere}>Just this text</button>
-            <button type="button" style={buttonStyle(true)} onClick={previewAll}>{all}</button>
+            <button type="button" style={buttonStyle(false)} onClick={() => { setLastAll(null); applyHere(); }}>Just this text</button>
+            <button type="button" style={buttonStyle(true)} onClick={() => { setLastAll(null); previewAll(); }}>{all}</button>
+            {lastAll && <button type="button" style={buttonStyle(false)} onClick={undoLastAll} disabled={saving}>{saving ? "Undoing…" : `Undo ${all.toLowerCase()}`}</button>}
             {changed && <button type="button" style={buttonStyle(false)} onClick={undoHere}>Undo</button>}
             {deletable && hasText && <button type="button" style={{ ...buttonStyle(false), marginLeft: "auto", borderColor: "#9b2c1f", color: "#9b2c1f" }} onClick={deleteText}>Delete</button>}
             {deletable && canRestore && <button type="button" style={{ ...buttonStyle(false), marginLeft: "auto" }} onClick={restoreText}>Restore</button>}
