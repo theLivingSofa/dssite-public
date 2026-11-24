@@ -5,16 +5,13 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { INK, KEEP_COLOUR, LUMA, PAPER, WARM } from "../lib/print-tone.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const PUBLIC = path.join(ROOT, "public");
 const SIZES = path.join(PUBLIC, "assets/sizes");
 const GENERATED = path.join(PUBLIC, "assets/generated");
 const WIDTHS = [480, 800, 1200];
-
-const INK = [24 / 255, 20 / 255, 16 / 255];
-const PAPER = [249 / 255, 244 / 255, 233 / 255];
-const WARM = [1, 0.985, 0.94];
 
 const read = (name) => JSON.parse(readFileSync(path.join(ROOT, "content/site", `${name}.json`), "utf8"));
 const localPath = (value) => value.replace(/^https:\/\/assets\.tina\.io\/[^/]+/, "");
@@ -37,10 +34,10 @@ function tone(data) {
     const r = data[i] / 255;
     const g = data[i + 1] / 255;
     const b = data[i + 2] / 255;
-    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    const lum = LUMA[0] * r + LUMA[1] * g + LUMA[2] * b;
     const grain = Math.sqrt(-2 * Math.log(next() || 1e-9)) * Math.cos(2 * Math.PI * next()) * 0.016;
     [r, g, b].forEach((c, k) => {
-      const muted = lum + (c - lum) * 0.2;
+      const muted = lum + (c - lum) * KEEP_COLOUR;
       const printed = (INK[k] + muted * (PAPER[k] - INK[k])) * WARM[k] + grain;
       out[i + k] = Math.round(Math.min(1, Math.max(0, printed)) * 255);
     });

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { tinaField, useTina } from "tinacms/dist/react";
 import Site, { type FieldFn } from "../../components/Site";
 import { FONT_KINDS, fontAttributes } from "../../lib/fonts.mjs";
+import { printToneMatrix } from "../../lib/print-tone.mjs";
 import type { SiteQuery } from "../../tina/__generated__/types";
 
 const field: FieldFn = (object, property, index) => ({
@@ -16,7 +17,12 @@ const EDITOR_CSS = `
 .hero__name, .hero__name .ln { pointer-events: none; }
 .hero__name [data-tina-field] { pointer-events: auto; }
 img[data-tina-field] { outline-offset: -4px !important; }
+img[data-tina-field]:not([srcset]) { filter: url(#dssite-print-tone); }
 `;
+
+// A photo uploaded in this session has no prepared sizes yet, so it has no srcset.
+// It shows with the site's print look straight away. Publishing applies the same look to the file.
+const PRINT_TONE = printToneMatrix();
 
 const SECTIONS = new Set(["hero", "profile", "quote", "timeline", "research", "institute", "roles", "gallery", "contact", "footer", "settings"]);
 
@@ -53,6 +59,11 @@ export default function EditPreview(props: { data: SiteQuery; query: string; var
   return (
     <>
       <style>{EDITOR_CSS}</style>
+      <svg width="0" height="0" aria-hidden="true" focusable="false" style={{ position: "absolute" }}>
+        <filter id="dssite-print-tone" colorInterpolationFilters="sRGB">
+          <feColorMatrix type="matrix" values={PRINT_TONE} />
+        </filter>
+      </svg>
       <Site data={data} field={field} />
     </>
   );
