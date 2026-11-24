@@ -54,7 +54,7 @@ Drafts stay in the editor's browser and are not sent anywhere until Publish. The
 
 ### AI proofreader
 
-- On Save, only the changed text is sent to `/api/proofread`, a Cloudflare Function that asks TinaCloud whether the user is logged in to this project.
+- On Save, only the changed text is sent to `/api/proofread`, a Cloudflare Function that checks the login against this project's TinaCloud content API, so a login to any other Tina project is refused.
 - It uses Gemini (`gemini-flash-lite-latest`) on Google's free tier, then Cloudflare Workers AI's free allowance if Gemini fails. If both fail, the save continues unchecked.
 - Suggestions that would change a name, number, negation or meaning are dropped. Nothing is changed unless the editor accepts it.
 - **To keep it free:** create the Gemini key in a project with no billing account, and stay on the Workers Free plan. At a free limit, requests stop instead of being charged.

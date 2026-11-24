@@ -4,6 +4,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { IMAGE_EXTENSIONS, IMAGE_KEYS, MAX_IMAGE_BYTES, MAX_LIST_ITEMS, fieldError, httpsError } from "../lib/content-rules.mjs";
+import { TINA_GRAPHQL_VERSION } from "../lib/tina-version.mjs";
 import { FONT_CHOICES, FONT_DEFAULT, FONT_EXTENSIONS, MAX_CUSTOM_FONTS, fontBytesError, fontFileError, fontNameError } from "../lib/fonts.mjs";
 
 const HERE = path.resolve(import.meta.dirname, "..");
@@ -14,7 +15,8 @@ const errors = [];
 const fail = (where, message) => errors.push(`${where}: ${message}`);
 
 // The schema always comes from this script's own copy, never from the content being checked.
-const collections = JSON.parse(readFileSync(path.join(HERE, "tina/tina-lock.json"), "utf8")).schema.collections;
+const lock = JSON.parse(readFileSync(path.join(HERE, "tina/tina-lock.json"), "utf8"));
+const collections = lock.schema.collections;
 
 function checkValue(field, value, where) {
   if (field.type === "object") {
@@ -143,6 +145,10 @@ for (const file of existsSync(MEDIA) ? walk(MEDIA) : []) {
   const check = SIGNATURES[extension === "jpeg" ? "jpg" : extension];
   if (!check(readFileSync(file).subarray(0, 16))) fail(where, "file contents do not match its extension");
 }
+
+// The proofreader checks logins against this version of TinaCloud's content API.
+const { major, minor } = lock.schema.version ?? {};
+if (TINA_GRAPHQL_VERSION !== `${major}.${minor}`) fail("lib/tina-version.mjs", `must be "${major}.${minor}" to match tina/tina-lock.json`);
 
 if (errors.length) {
   console.error(`Content check failed with ${errors.length} problem(s):`);

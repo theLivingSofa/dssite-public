@@ -8,6 +8,7 @@ import {
   userPrompt,
   validItems,
 } from "../../lib/proofread-rules.mjs";
+import { TINA_GRAPHQL_VERSION } from "../../lib/tina-version.mjs";
 
 const GEMINI_MODEL = "gemini-flash-lite-latest";
 const CLOUDFLARE_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
@@ -24,17 +25,22 @@ const json = (body, status = 200) =>
     headers: { "content-type": "application/json", "cache-control": "no-store", "x-robots-tag": "noindex" },
   });
 
-// Only someone logged in to this TinaCloud project can use this endpoint.
+// Only someone who can read this TinaCloud project can use this endpoint. A login to
+// any other Tina project is refused by TinaCloud's content API for this project.
 async function isSignedIn(request, env) {
   const authorization = request.headers.get("authorization") ?? "";
   const clientId = env.NEXT_PUBLIC_TINA_CLIENT_ID;
   if (!clientId || authorization.length > MAX_LOGIN_HEADER || !/^Bearer [\w.-]+$/.test(authorization)) return false;
   try {
-    const response = await fetch(`https://identity.tinajs.io/v2/apps/${encodeURIComponent(clientId)}/currentUser`, {
-      headers: { authorization },
+    const project = `https://content.tinajs.io/${TINA_GRAPHQL_VERSION}/content/${encodeURIComponent(clientId)}/github/production`;
+    const response = await fetch(project, {
+      method: "POST",
+      headers: { authorization, "content-type": "application/json" },
+      body: JSON.stringify({ query: "{ __typename }" }),
       redirect: "manual",
       signal: AbortSignal.timeout(LOGIN_TIMEOUT_MS),
     });
+    if (!response.ok) console.warn(`proofread: login refused by TinaCloud (${response.status})`);
     return response.ok;
   } catch {
     return false;

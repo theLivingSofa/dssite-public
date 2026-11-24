@@ -9,7 +9,9 @@ const ROOT = path.resolve(import.meta.dirname, "..");
 const base = process.env.LIVE_URL?.trim();
 const ATTEMPTS = Number(process.env.CHECK_ATTEMPTS ?? 3);
 const RETRY_MS = 120_000;
-const MAX_UNEXPECTED_CHARS = 240;
+const MAX_UNEXPECTED_CHARS = 160;
+// Fixed words on the page that are not stored as content.
+const PAGE_TEXT = ["Skip to content"];
 const SKIP_KEYS = new Set([...URL_KEYS, ...IMAGE_KEYS, "href", "anchor", "railLabel", "datetime", "updatedDate", "alt", "portraitAlt", "shareImageAlt",
   "description", "shareDescription", "title", "siteName", "shareTitle", "person"]);
 const KEEP_IN = new Set(["timeline", "research"]);
@@ -46,7 +48,10 @@ function expectedStrings() {
     const doc = path.basename(file, ".json");
     const data = JSON.parse(readFileSync(path.join(ROOT, "content/site", file), "utf8"));
     // A menu link leaves the page when its whole section is deleted.
-    if (doc === "settings") walk(data.nav, "nav", doc, true);
+    if (doc === "settings") {
+      walk(data.nav, "nav", doc, true);
+      walk(data.menuLabel, "menuLabel", doc, true);
+    }
     else walk(data, doc, doc);
   }
   const required = new Set(found.map(squash));
@@ -72,6 +77,10 @@ async function check() {
     if (required.has(value) && !text.includes(value)) problems.push(`missing text: "${value.slice(0, 60)}"`);
     text = text.split(value).join("");
   }
+  for (const value of PAGE_TEXT) text = text.split(squash(value)).join("");
+  // Section numbers and punctuation are expected. Any leftover word means text was added.
+  const words = text.replace(/[^\p{L}]/gu, "");
+  if (words) problems.push(`unexpected words on the page: "${words.slice(0, 80)}"`);
   if (text.length > MAX_UNEXPECTED_CHARS) problems.push(`${text.length} characters of unexpected text: "${text.slice(0, 80)}"`);
 
   const scripts = [...html.matchAll(/<script\b([^>]*)>/gi)].map((m) => m[1].trim());
