@@ -1,3 +1,4 @@
+import { collections } from "./collections";
 import { proofreadBeforeSave } from "./proofread";
 
 // Save draft keeps changes in this browser. Publish sends every changed section at once.
@@ -20,6 +21,7 @@ type DraftForm = {
 };
 type Cms = {
   dispatch(action: { type: "forms:set-active-form-id"; value: string }): void;
+  state?: { activeFormId?: string | null };
   alerts: { success(message: string): void; error(message: string): void };
   api: {
     tina: {
@@ -58,7 +60,10 @@ const forms = new Map<string, DraftForm>();
 const timers = new Map<string, number>();
 let promptTimer: number | undefined;
 let placeFrame: number | undefined;
-let bar: { root: HTMLElement; status: HTMLElement; publish: HTMLButtonElement; discard: HTMLButtonElement } | undefined;
+let bar:
+  | { root: HTMLElement; status: HTMLElement; publish: HTMLButtonElement; discard: HTMLButtonElement; changes: HTMLButtonElement; panel: HTMLElement }
+  | undefined;
+let showingChanges = false;
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 const sectionName = (id: string) => id.match(DOCUMENT)?.[1] ?? "";
@@ -256,6 +261,164 @@ function dialog(title: string, lines: string[], actions: { label: string; primar
   });
 }
 
+// ---------- "What changed" list, and jumping to a section in the preview ----------
+
+type Path = (string | number)[];
+type SchemaField = { name: string; label?: string; fields?: SchemaField[] };
+
+// Where each section starts on the page.
+const SECTION_START: Record<string, string> = {
+  settings: ".mast",
+  hero: ".hero",
+  profile: "#profile",
+  quote: ".quote",
+  timeline: "#timeline",
+  research: "#research",
+  institute: "#institute",
+  roles: "#roles",
+  gallery: "#gallery",
+  contact: "#contact",
+  footer: ".foot",
+};
+
+// Field names as the editor shows them, taken from the editor's own schema.
+function describePath(section: string, path: Path) {
+  let fields = ((collections.find(({ name }) => name === section)?.fields ?? []) as unknown) as SchemaField[];
+  const parts: string[] = [];
+  for (const step of path) {
+    if (typeof step === "number") {
+      parts.push(`item ${step + 1}`);
+      continue;
+    }
+    const field = fields.find(({ name }) => name === step);
+    parts.push(field?.label ?? step);
+    fields = field?.fields ?? [];
+  }
+  return parts.join(" › ");
+}
+
+const quote = (value: unknown) => {
+  if (typeof value === "boolean") return value ? "on" : "off";
+  const text = String(value);
+  return `“${text.length > 36 ? `${text.slice(0, 36)}…` : text}”`;
+};
+
+function listChanges(before: unknown, after: unknown, path: Path = [], out: { path: Path; text: string }[] = []) {
+  if (fingerprint(before) === fingerprint(after)) return out;
+  if (Array.isArray(before) || Array.isArray(after)) {
+    const was = Array.isArray(before) ? before : [];
+    const now = Array.isArray(after) ? after : [];
+    const shared = Math.min(was.length, now.length);
+    if (now.length < was.length) out.push({ path, text: `${was.length - now.length} item${was.length - now.length === 1 ? "" : "s"} removed` });
+    if (now.length > was.length) out.push({ path, text: `${now.length - was.length} item${now.length - was.length === 1 ? "" : "s"} added` });
+    for (let i = 0; i < shared; i += 1) listChanges(was[i], now[i], [...path, i], out);
+    return out;
+  }
+  const isGroup = (value: unknown) => Boolean(value) && typeof value === "object";
+  if (isGroup(before) || isGroup(after)) {
+    const was = (isGroup(before) ? before : {}) as Values;
+    const now = (isGroup(after) ? after : {}) as Values;
+    for (const key of new Set([...Object.keys(was), ...Object.keys(now)])) {
+      if (!key.startsWith("_")) listChanges(was[key], now[key], [...path, key], out);
+    }
+    return out;
+  }
+  if (isEmpty(canonical(after))) out.push({ path, text: typeof before === "boolean" ? "off" : "deleted" });
+  else if (isEmpty(canonical(before))) out.push({ path, text: `added ${quote(after)}` });
+  else out.push({ path, text: `changed to ${quote(after)}` });
+  return out;
+}
+
+function previewDocument() {
+  return document.querySelector<HTMLIFrameElement>("iframe")?.contentDocument ?? null;
+}
+
+// Scrolls the preview to the changed text, or to the start of its section, and outlines it briefly.
+function scrollPreview(section: string, path: Path = [], tries = 8) {
+  const doc = previewDocument();
+  if (!doc?.querySelector(SECTION_START[section] ?? "body")) {
+    if (tries > 0) window.setTimeout(() => scrollPreview(section, path, tries - 1), 300);
+    return;
+  }
+  const steps = path.map((step, i) => (i === path.length - 1 && typeof step === "string" ? step.replace(/Font$/, "") : String(step)));
+  let target: Element | null = null;
+  // The timeline scrolls sideways, so it always opens at its start.
+  for (let n = section === "timeline" ? 0 : steps.length; n > 0 && !target; n -= 1) {
+    const key = `---${section}.${steps.slice(0, n).join(".")}`;
+    target =
+      [...doc.querySelectorAll("[data-tina-field]")].find((element) => {
+        const field = element.getAttribute("data-tina-field") ?? "";
+        return field.endsWith(key) || field.includes(`${key}.`);
+      }) ?? null;
+  }
+  target ??= doc.querySelector(SECTION_START[section] ?? "body");
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: target.matches(SECTION_START[section] ?? "") ? "start" : "center" });
+  const element = target as HTMLElement;
+  if (element.matches(SECTION_START[section] ?? "")) return;
+  const before = element.style.outline;
+  element.style.outline = "3px solid #9e3b2a";
+  window.setTimeout(() => (element.style.outline = before), 1800);
+}
+
+let openedFromList = 0;
+function openSection(id: string, path: Path = []) {
+  openedFromList = Date.now();
+  cms?.dispatch({ type: "forms:set-active-form-id", value: id });
+  window.setTimeout(() => scrollPreview(sectionName(id), path), 350);
+}
+
+// Opening a section from the editor's menu or section list scrolls the preview to it.
+// A click on the preview itself also opens a section, and must not move the page.
+let lastSection: string | null | undefined;
+let lastPreviewPress = 0;
+const watchedPreviews = new WeakSet<Document>();
+function followOpenSection() {
+  const doc = previewDocument();
+  if (doc && !watchedPreviews.has(doc)) {
+    watchedPreviews.add(doc);
+    doc.addEventListener("pointerdown", () => (lastPreviewPress = Date.now()), true);
+  }
+  const active = cms?.state?.activeFormId ?? null;
+  if (active === lastSection) return;
+  lastSection = active;
+  const recent = Date.now() - Math.max(lastPreviewPress, openedFromList) < 1500;
+  if (active && DOCUMENT.test(active) && !recent) scrollPreview(sectionName(active));
+}
+
+function renderChanges() {
+  if (!bar) return;
+  const { panel } = bar;
+  panel.replaceChildren();
+  const ids = Object.keys(drafts).sort((a, b) => sectionLabel(a).localeCompare(sectionLabel(b), undefined, { numeric: true }));
+  const link = (text: string, strong: boolean, onclick: () => void) => {
+    const node = document.createElement("button");
+    node.type = "button";
+    node.textContent = text;
+    node.style.cssText = `display:block;width:100%;text-align:left;background:none;border:0;padding:3px 0;cursor:pointer;color:#16130f;font:${strong ? 600 : 400} 12px/1.35 system-ui,sans-serif;text-decoration:underline;text-decoration-color:#d8d1c4;text-underline-offset:2px;overflow-wrap:anywhere`;
+    node.onclick = onclick;
+    return node;
+  };
+  for (const id of ids) {
+    const draft = drafts[id];
+    const section = sectionName(id);
+    const items = listChanges(published.get(id), draft.working ?? draft.saved);
+    const group = document.createElement("div");
+    group.style.cssText = "padding:6px 0;border-bottom:1px solid #eee9df";
+    group.append(link(`${sectionLabel(id)}${draft.working ? " · not saved as a draft yet" : ""}`, true, () => openSection(id)));
+    for (const item of items.slice(0, 8)) {
+      group.append(link(`${describePath(section, item.path) || "Section"}: ${item.text}`, false, () => openSection(id, item.path)));
+    }
+    if (items.length > 8) {
+      const more = document.createElement("span");
+      more.textContent = `and ${items.length - 8} more`;
+      more.style.cssText = "display:block;color:#6b6358;font:400 12px/1.35 system-ui,sans-serif;padding:3px 0";
+      group.append(more);
+    }
+    panel.append(group);
+  }
+}
+
 function refreshBar() {
   if (!bar) return;
   const count = Object.keys(drafts).length;
@@ -268,11 +431,18 @@ function refreshBar() {
   bar.publish.style.opacity = bar.publish.disabled ? "0.45" : "1";
   bar.discard.style.opacity = bar.discard.disabled ? "0.45" : "1";
   bar.publish.textContent = busy ? "Publishing…" : "Publish";
+  bar.changes.style.display = count ? "inline-block" : "none";
+  if (!count) showingChanges = false;
+  bar.changes.textContent = showingChanges ? "Hide changes" : "What changed";
+  bar.changes.setAttribute("aria-expanded", String(showingChanges));
+  bar.panel.style.display = showingChanges ? "block" : "none";
+  if (showingChanges) renderChanges();
 }
 
 // The bar sits in the sidebar, above Save draft, so it never covers Tina's own buttons.
 function placeBar() {
   placeFrame = undefined;
+  followOpenSection();
   if (!bar) return;
   const { root } = bar;
   const save = [...document.querySelectorAll("button")].find((button) => button.textContent?.trim() === "Save draft");
@@ -331,10 +501,22 @@ function buildBar() {
   };
   const discard = button("Discard", false, () => void discardDrafts());
   const publish = button("Publish", true, () => void publishDrafts());
+  const changes = document.createElement("button");
+  changes.type = "button";
+  changes.style.cssText = "flex:none;background:none;border:0;padding:0;cursor:pointer;color:#16130f;font:600 12px/1.3 system-ui,sans-serif;text-decoration:underline;text-underline-offset:2px";
+  changes.onclick = () => {
+    showingChanges = !showingChanges;
+    refreshBar();
+  };
+  const panel = document.createElement("div");
+  panel.setAttribute("role", "region");
+  panel.setAttribute("aria-label", "Unpublished changes");
+  panel.style.cssText = "order:-1;flex:1 0 100%;display:none;max-height:min(220px,32vh);overflow:auto;border-bottom:1px solid #e5e2da;margin-bottom:2px;padding-bottom:4px";
+  status.after(changes);
   actions.append(discard, publish);
-  root.append(status, actions);
+  root.append(panel, status, changes, actions);
   document.body.append(root);
-  bar = { root, status, publish, discard };
+  bar = { root, status, publish, discard, changes, panel };
   refreshBar();
   new MutationObserver(schedulePlaceBar).observe(document.body, { childList: true, subtree: true });
   window.addEventListener("hashchange", schedulePlaceBar);
