@@ -4,6 +4,7 @@ import {
   SYSTEM_PROMPT,
   cleanSuggestions,
   parseModelReply,
+  replaceOnce,
   userPrompt,
   validItems,
 } from "../../lib/proofread-rules.mjs";
@@ -103,7 +104,7 @@ async function findMistakes(ask, items, env, deadline) {
   if (!first.length || timeLeft() < MIN_RECHECK_MS) return first;
   const corrected = items.map((item) => ({
     ...item,
-    text: first.filter(({ id }) => id === item.id).reduce((text, fix) => text.replace(fix.original, fix.replacement), item.text),
+    text: first.filter(({ id }) => id === item.id).reduce((text, fix) => replaceOnce(text, fix.original, fix.replacement), item.text),
   }));
   try {
     const second = parseModelReply(await ask(corrected, env, timeLeft()));
