@@ -15,7 +15,8 @@ Use a strong password that you don't use anywhere else, and please don't share y
 2. Type in the box that opens on the left. The page updates as you type.
 3. Press **Save draft**. The spelling check runs every time.
 4. If a box lists possible mistakes, untick anything that's correct, such as a name. Then press **Fix it and save**, **Edit and save** to correct it yourself, or **Save anyway**.
-5. When all your changes look right, press **Publish**, just above **Save draft**. They go live together in about five minutes.
+5. To check what you changed, press **What changed** in the bar above **Save draft**. Click any line to jump to that text in the preview.
+6. When all your changes look right, press **Publish**, just above **Save draft**. They go live together in about five minutes.
 
 Drafts stay in this browser on this computer. If the page closes or reloads, the editor offers to **Restore** them.
 
