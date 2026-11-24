@@ -52,7 +52,12 @@ async function askGemini(items, env, timeoutMs) {
       generationConfig: { temperature: 0, maxOutputTokens: 2000, responseMimeType: "application/json" },
     }),
   });
-  if (!response.ok) throw new Error(`Gemini returned ${response.status}`);
+  if (!response.ok) {
+    // Google's error code and message, never the key or the edited text.
+    const reply = await response.json().catch(() => ({}));
+    const reason = [reply?.error?.status, reply?.error?.message].filter(Boolean).join(": ").slice(0, 200);
+    throw new Error(`Gemini returned ${response.status}${reason ? ` (${reason})` : ""}`);
+  }
   const data = await response.json();
   return (data.candidates?.[0]?.content?.parts ?? []).map((part) => part.text ?? "").join("");
 }
@@ -109,12 +114,15 @@ export async function onRequestPost({ request, env }) {
   if (!validItems(items)) return json({ error: "bad request" }, 400);
 
   const deadline = Date.now() + TOTAL_TIME_MS;
-  for (const ask of [askGemini, askCloudflare]) {
+  for (const [name, ask] of [["Gemini", askGemini], ["Cloudflare AI", askCloudflare]]) {
     if (deadline - Date.now() < MIN_RECHECK_MS) break;
     try {
-      return json({ checked: true, suggestions: await findMistakes(ask, items, env, deadline) });
-    } catch {
-      // Try the next free model.
+      const suggestions = await findMistakes(ask, items, env, deadline);
+      console.log(`proofread: answered by ${name}`);
+      return json({ checked: true, suggestions });
+    } catch (error) {
+      // Shown in Cloudflare's logs, so a failing model can be found. Try the next free model.
+      console.warn(`proofread: ${name} failed: ${error?.name === "TimeoutError" ? "timed out" : error?.message}`);
     }
   }
   // Proofreading is a helper, so a failure never blocks the editor.
