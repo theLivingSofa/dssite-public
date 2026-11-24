@@ -40,7 +40,24 @@ async function isSignedIn(request, env) {
   }
 }
 
+const BUSY = new Set([429, 500, 503]);
+const RETRY_PAUSE_MS = 700;
+
+// Google is sometimes briefly overloaded, so a busy reply gets one more try.
 async function askGemini(items, env, timeoutMs) {
+  const started = Date.now();
+  try {
+    return await askGeminiOnce(items, env, timeoutMs);
+  } catch (error) {
+    const left = timeoutMs - (Date.now() - started) - RETRY_PAUSE_MS;
+    if (!BUSY.has(error?.status) || left < MIN_RECHECK_MS) throw error;
+    console.warn(`proofread: ${error.message}, trying Gemini once more`);
+    await new Promise((resolve) => setTimeout(resolve, RETRY_PAUSE_MS));
+    return askGeminiOnce(items, env, left);
+  }
+}
+
+async function askGeminiOnce(items, env, timeoutMs) {
   if (!env.GEMINI_API_KEY) throw new Error("no Gemini key");
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
     method: "POST",
@@ -56,7 +73,7 @@ async function askGemini(items, env, timeoutMs) {
     // Google's error code and message, never the key or the edited text.
     const reply = await response.json().catch(() => ({}));
     const reason = [reply?.error?.status, reply?.error?.message].filter(Boolean).join(": ").slice(0, 200);
-    throw new Error(`Gemini returned ${response.status}${reason ? ` (${reason})` : ""}`);
+    throw Object.assign(new Error(`Gemini returned ${response.status}${reason ? ` (${reason})` : ""}`), { status: response.status });
   }
   const data = await response.json();
   return (data.candidates?.[0]?.content?.parts ?? []).map((part) => part.text ?? "").join("");
