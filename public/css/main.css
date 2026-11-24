@@ -194,13 +194,10 @@ a:hover { background-size: 100% 2px; color: var(--accent); }
 .sec { padding-block: clamp(4rem, 9vw, 9rem); border-top: 1px solid var(--ink); }
 .sec--deep { background: var(--paper-deep); }
 .sec.wrap { align-content: start; }
-.rail { grid-column: 1 / -1; display: flex; gap: 0.75rem; align-items: baseline; margin-bottom: 1.25rem; }
+.rail { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.6rem; align-items: flex-start; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); min-width: 0; }
 .rail__num { font: 400 var(--step-1)/1 var(--f-date, var(--serif)); color: var(--accent); font-variant-numeric: lining-nums tabular-nums; }
-.rail__label { color: var(--ink-soft); }
-.rail__label::before { content: "("; } .rail__label::after { content: ")"; }
 .body { grid-column: 1 / -1; min-width: 0; }
 .body > * + * { margin-top: 1.25rem; }
-.body > .h2 + * { margin-top: clamp(1.5rem, 3vw, 2.5rem); }
 .h2 { font: 400 var(--step-4)/0.95 var(--f-heading, var(--serif)); letter-spacing: -0.035em; font-optical-sizing: auto; }
 .h3 { font: 500 var(--step-3)/1.15 var(--f-subheading, var(--serif)); letter-spacing: -0.015em; }
 .h3--rule { padding-top: 1rem; border-top: 1px solid var(--ink); margin-top: clamp(3rem, 6vw, 5rem) !important; }
@@ -211,8 +208,8 @@ a:hover { background-size: 100% 2px; color: var(--accent); }
 .body p.lead { max-width: 30ch; }
 
 @media (min-width: 900px) {
-  .rail { grid-column: 1 / 4; flex-direction: column; gap: 0.35rem; margin-bottom: 0; position: sticky; top: 1.5rem; align-self: start; height: max-content; }
-  .rail__num { font-size: var(--step-3); }
+  .rail { grid-column: 1 / 4; gap: 0.6rem; margin-bottom: 0; position: sticky; top: 2rem; align-self: start; height: max-content; }
+  .rail .h2 { font-size: clamp(1.75rem, 0.55rem + 2.1vw, 3.25rem); line-height: 1.04; letter-spacing: -0.025em; }
   .body { grid-column: 4 / 11; }
   .body--wide { grid-column: 4 / -1; }
   .body--wide p { max-width: 64ch; }
@@ -237,7 +234,6 @@ a:hover { background-size: 100% 2px; color: var(--accent); }
 .tl { border-top: 1px solid var(--ink); background: var(--paper-deep); }
 .tl__intro { padding-top: clamp(4rem, 9vw, 9rem); }
 .tl__intro .rail { grid-column: 1 / -1; position: static; }
-.tl__intro .body { grid-column: 1 / -1; }
 .tl__list { padding-bottom: clamp(4rem, 9vw, 9rem); margin-top: clamp(1.5rem, 3vw, 2.5rem); }
 .timeline { grid-column: 1 / -1; counter-reset: t; }
 .timeline li {
@@ -251,8 +247,12 @@ a:hover { background-size: 100% 2px; color: var(--accent); }
 .tl__bar { display: none; }
 
 @media (min-width: 900px) {
-  .tl__intro .rail { grid-column: 1 / 4; }
-  .tl__intro .body { grid-column: 4 / -1; }
+  .tl__pin {
+    display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter);
+    padding: clamp(4rem, 9vw, 9rem) var(--margin); max-width: var(--maxw); margin-inline: auto;
+  }
+  .tl__intro, .tl__list { display: contents; }
+  .tl__intro .rail { grid-column: 1 / 4; position: sticky; }
   .timeline { grid-column: 4 / -1; }
   .timeline li { grid-template-columns: 11rem 1fr; gap: 2rem; padding-left: 0; }
   .timeline li::before { display: none; }
@@ -304,7 +304,7 @@ a:hover { background-size: 100% 2px; color: var(--accent); }
 
 /* ---------- gallery ---------- */
 .gallery { row-gap: clamp(2rem, 4vw, 3.5rem); }
-.gallery .rail, .gallery .body { grid-column: 1 / -1; }
+.gallery .rail { grid-column: 1 / -1; }
 .gallery__intro { max-width: 60ch; color: var(--ink-soft); }
 .g { grid-column: 1 / -1; position: relative; }
 .g img { width: 100%; object-fit: cover; background: var(--sand); }
@@ -320,8 +320,7 @@ a:hover { background-size: 100% 2px; color: var(--accent); }
 .g--g img { aspect-ratio: 4 / 5; object-position: 60% 22%; }
 
 @media (min-width: 900px) {
-  .gallery .rail { grid-column: 1 / 4; }
-  .gallery .body { grid-column: 4 / -1; }
+  .gallery .rail { grid-column: 1 / -1; position: static; }
   .g--a { grid-column: 1 / 9; }
   .g--b { grid-column: 9 / -1; align-self: end; }
   .g--c { grid-column: 1 / -1; }
@@ -482,10 +481,9 @@ html[data-font-small="Hanken Grotesk"] { --f-small: var(--ff-hanken); }
   @media (min-width: 1100px) {
     @supports (animation-timeline: view()) {
       .tl { view-timeline: --tl block; height: 320vh; }
-      .tl__pin { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; gap: clamp(1.5rem, 4vh, 3rem); overflow: clip; position: sticky; }
-      .tl__intro { padding-top: 0; width: 100%; max-width: var(--maxw); margin-inline: auto; }
-      .tl__intro .rail { margin-bottom: 0.75rem; flex-direction: row; }
-      .tl__intro .body { grid-column: 1 / -1; }
+      .tl__pin { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; gap: clamp(1.5rem, 4vh, 3rem); overflow: clip; position: sticky; padding: 0; max-width: none; margin-inline: 0; }
+      .tl__intro { display: grid; padding-top: 0; width: 100%; max-width: var(--maxw); margin-inline: auto; }
+      .tl__intro .rail { grid-column: 1 / -1; position: static; margin-bottom: 0.75rem; }
       .tl__intro .h2 { font-size: clamp(2.5rem, 1rem + 4.5vw, 5.5rem); }
       .tl__list { display: block; max-width: none; padding: 0; margin: 0; }
       .timeline {

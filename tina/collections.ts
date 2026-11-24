@@ -20,7 +20,7 @@ const withFonts = (fields: TinaField[], path: string): TinaField[] =>
       return [{ ...field, fields: withFonts(field.fields as TinaField[], here) } as TinaField];
     }
     const kind = (FONT_FIELDS as Record<string, FontKind>)[here];
-    if (!kind || field.type !== "string" || field.list) return [field];
+    if (!kind || field.type !== "string" || field.list || (field.ui as { component?: unknown } | undefined)?.component === "hidden") return [field];
     const ui = (field.ui ?? {}) as Record<string, unknown>;
     return [
       { ...field, ui: { ...ui, component: fontField(kind, ui.component === "textarea", !MUST_STAY.has(here)) } } as unknown as TinaField,
@@ -97,11 +97,20 @@ const list = (
   fields,
 });
 
+// Brings back one source or credit while "Hide sources and photo credits" is on.
+const keepShown = (name = "keepSource", label = "Show even when sources are hidden"): TinaField => ({
+  type: "boolean",
+  name,
+  label,
+  description: "Only matters while Hide sources and photo credits is on in Site settings.",
+});
+
 const links = (name = "sources", label = "Sources") =>
-  list(name, label, (i) => i?.label, [text("label", "Link text"), requiredSource("url", "Link address")]);
+  list(name, label, (i) => i?.label, [text("label", "Link text"), requiredSource("url", "Link address"), keepShown()]);
 
 const sectionTitles: TinaField[] = [
-  text("railLabel", "Small label in the margin"),
+  // No longer shown on the page. Kept in the data, hidden from the editor.
+  { type: "string", name: "railLabel", label: "Small label in the margin", ui: { component: "hidden" } } as TinaField,
   text("heading", "Section heading"),
 ];
 
@@ -110,6 +119,7 @@ export const collections: Collection[] = [
     photo("portrait", "Portrait"),
     text("portraitAlt", "Portrait description", "Read aloud by screen readers. Describe what the photo shows."),
     text("portraitCredit", "Portrait credit"),
+    keepShown("keepCredit", "Show this credit even when sources are hidden"),
     text("role", "Title line"),
     text("honorific", "Honorific"),
     text("firstName", "First name"),
@@ -168,6 +178,7 @@ export const collections: Collection[] = [
         longText("text", "Text"),
         text("sourceLabel", "Source name"),
         requiredSource("sourceUrl", "Source address"),
+        keepShown(),
       ]),
     ]),
   ]),
@@ -188,6 +199,7 @@ export const collections: Collection[] = [
         text("alt", "Photo description", "Read aloud by screen readers. Describe what the photo shows."),
         longText("caption", "Caption"),
         text("credit", "Credit"),
+        keepShown("keepCredit", "Show this credit even when sources are hidden"),
       ],
       7,
     ),
@@ -203,6 +215,7 @@ export const collections: Collection[] = [
       ]),
       text("sourceLabel", "Source name"),
       text("sourceUrl", "Source address"),
+      keepShown(),
     ]),
     text("sourcePrefix", "Word before the source"),
     text("officialLabel", "Button text"),
@@ -224,7 +237,7 @@ export const collections: Collection[] = [
       type: "boolean",
       name: "hideSources",
       label: "Hide sources and photo credits",
-      description: "Removes the small source lines and photo credits from the page. They stay saved, so turning this off brings them back.",
+      description: "Removes the small source lines and photo credits from the page. They stay saved, so turning this off brings them back. To keep a few, open them and turn on Show even when sources are hidden.",
     },
     text("siteUrl", "Website address", "The full address ending in /. Change it here when the domain changes."),
     text("title", "Browser tab title"),
