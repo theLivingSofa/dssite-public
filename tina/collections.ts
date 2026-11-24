@@ -8,6 +8,9 @@ import { proofreadBeforeSave } from "./proofread";
 // and the editor previews that page at /edit/.
 type FontKind = keyof typeof FONT_KINDS;
 
+// The page needs these to work, so they have no Delete button.
+const MUST_STAY = new Set(["hero.firstName", "hero.lastName", "settings.menuLabel"]);
+
 // Adds the font control to each visible text field, and a hidden field that stores
 // a font chosen for that exact text. Stored beside the text, so it moves with list items.
 const withFonts = (fields: TinaField[], path: string): TinaField[] =>
@@ -20,7 +23,7 @@ const withFonts = (fields: TinaField[], path: string): TinaField[] =>
     if (!kind || field.type !== "string" || field.list) return [field];
     const ui = (field.ui ?? {}) as Record<string, unknown>;
     return [
-      { ...field, ui: { ...ui, component: fontField(kind, ui.component === "textarea") } } as unknown as TinaField,
+      { ...field, ui: { ...ui, component: fontField(kind, ui.component === "textarea", !MUST_STAY.has(here)) } } as unknown as TinaField,
       { type: "string", name: `${field.name}Font`, label: `${field.label} font`, ui: { component: "hidden" } } as TinaField,
     ];
   });
@@ -209,6 +212,7 @@ export const collections: Collection[] = [
     text("heading", "Heading"),
     text("linkLabel", "Link text"),
     text("linkUrl", "Link address"),
+    longText("notice", "Footer notice", "The short statement in the dark footer. Leave it empty to remove it."),
     text("updatedLabel", "Words before the date"),
     text("updatedText", "Date as shown"),
     text("updatedDate", "Date in YYYY-MM-DD"),
@@ -216,6 +220,12 @@ export const collections: Collection[] = [
     links(),
   ]),
   section("settings", "11 Site settings and sharing", [
+    {
+      type: "boolean",
+      name: "hideSources",
+      label: "Hide sources and photo credits",
+      description: "Removes the small source lines and photo credits from the page. They stay saved, so turning this off brings them back.",
+    },
     text("siteUrl", "Website address", "The full address ending in /. Change it here when the domain changes."),
     text("title", "Browser tab title"),
     longText("description", "Search engine description"),

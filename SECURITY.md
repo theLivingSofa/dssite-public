@@ -75,7 +75,7 @@ Drafts stay in the editor's browser and are not sent anywhere until Publish. The
 - Every timeline entry, milestone, role and publication needs an https source.
 - External links use `rel="noopener noreferrer"`.
 - A strict Content-Security-Policy and standard security headers are set in `public/_headers`.
-- The independent-profile notice is fixed in code and cannot be edited in the CMS.
+- The footer notice is an ordinary CMS field with the same plain-text rules as other text, so anyone with editor access can change or remove it.
 
 ### 5. Detection
 

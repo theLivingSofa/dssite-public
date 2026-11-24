@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from "react";
-import { DISCLAIMER, safeHref } from "../lib/content-rules.mjs";
+import { safeHref } from "../lib/content-rules.mjs";
 import { fontChoice } from "../lib/fonts.mjs";
 import { responsive } from "../lib/images";
 import type { SiteQuery } from "../tina/__generated__/types";
@@ -22,6 +22,15 @@ const GALLERY_SLOTS = [
   { slot: "f", sizes: "(min-width: 900px) 62vw, 100vw", target: 1200 },
   { slot: "g", sizes: "(min-width: 900px) 28vw, 100vw", target: 800 },
 ];
+
+// A deleted text is empty. Empty things are left out of the page, so the spacing closes up.
+const filled = (...values: unknown[]) => values.some((value) => (typeof value === "string" ? value.trim() !== "" : Boolean(value)));
+
+// The list items that still have something to show in the named fields.
+const kept = <T,>(items: readonly (T | null | undefined)[] | null | undefined, ...keys: (keyof T)[]) =>
+  (items ?? []).filter((item): item is T => Boolean(item) && keys.some((key) => filled((item as T)[key])));
+
+const labelled = (id: string, heading?: string | null) => (filled(heading) ? { "aria-labelledby": id } : {});
 
 // Editor attributes for one piece of text, plus its own font if it has one.
 const mark = (field: FieldFn, object: unknown, property: string, index?: number) => {
@@ -50,7 +59,7 @@ function Bare({ field, object, property, children }: Editable & { object: unknow
 }
 
 function Links({ items, separator, field }: Editable & { items?: (Link | null)[] | null; separator: string }) {
-  return items?.map((link, i) => (
+  return kept(items as Link[] | null | undefined, "label" as never).map((link, i) => (
     <Fragment key={i}>
       {i > 0 && separator}
       <a {...linkTo(link?.url)} {...mark(field, link, "label")}>{link?.label}</a>
@@ -58,16 +67,19 @@ function Links({ items, separator, field }: Editable & { items?: (Link | null)[]
   ));
 }
 
+const hasLinks = (items?: (Link | null)[] | null) => (items ?? []).some((link) => filled(link?.label));
+
 function Rail({ number, section, field }: Editable & { number: string; section: { railLabel?: string | null } }) {
   return (
     <div className="rail">
       <span className="rail__num" aria-hidden="true">{number}</span>
-      <span className="rail__label sc" {...mark(field, section, "railLabel")}>{section.railLabel}</span>
+      {filled(section.railLabel) && <span className="rail__label sc" {...mark(field, section, "railLabel")}>{section.railLabel}</span>}
     </div>
   );
 }
 
 function SourceLine({ section, field }: Editable & { section: { sourcesLabel?: string | null; sources?: (Link | null)[] | null } }) {
+  if (!hasLinks(section.sources)) return null;
   return (
     <p className="srcline">
       <Bare field={field} object={section} property="sourcesLabel">{section.sourcesLabel}</Bare>{" "}
@@ -80,6 +92,45 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
   const { settings, hero, profile, quote, timeline, research, institute, roles, gallery, contact, footer } = data;
   const f = (object: unknown, property: string, index?: number) => mark(field, object, property, index);
   const portrait = responsive(hero.portrait, 480);
+  // The sources stay saved, so turning this back off restores every line.
+  const showSources = !settings.hideSources;
+
+  const facts = kept(hero.facts, "label", "value");
+  const paragraphs = kept(profile.paragraphs, "text");
+  const entries = kept(timeline.entries, "when", "title", "text");
+  const areas = kept(research.areas, "name", "description");
+  const notes = kept(research.notes, "heading", "text");
+  const papers = kept(research.papers, "year", "title", "journal", "coauthors");
+  const books = kept(research.books, "title", "publisher");
+  const ledgers = (institute.ledgers ?? [])
+    .map((ledger) => ({ ledger, rows: kept(ledger?.rows, "label", "text") }))
+    .filter(({ ledger, rows }) => filled(ledger?.heading) || rows.length > 0);
+  const roleRows = kept(roles.roles, "label", "text");
+  const photos = kept(gallery.items, "image", "caption").slice(0, GALLERY_SLOTS.length);
+  const columns = (contact.columns ?? [])
+    .map((column) => ({ column, rows: kept(column?.rows, "label", "value") }))
+    .filter(({ column, rows }) => filled(column?.heading) || rows.length > 0);
+  const footerSources = showSources ? kept(footer.sources, "label") : [];
+
+  const researchMain = filled(research.lead) || areas.length > 0;
+  const footerNotice = filled(footer.heading, footer.linkLabel, footer.notice, footer.updatedText);
+
+  // A section with nothing left in it disappears, and its menu link goes with it.
+  const visible: Record<string, boolean> = {
+    profile: filled(profile.railLabel, profile.heading, profile.lead) || paragraphs.length > 0,
+    timeline: filled(timeline.railLabel, timeline.heading) || entries.length > 0,
+    research:
+      filled(research.railLabel, research.heading, research.papersHeading, research.booksHeading) ||
+      researchMain || notes.length > 0 || papers.length > 0 || books.length > 0,
+    institute: filled(institute.railLabel, institute.heading) || ledgers.length > 0,
+    roles: filled(roles.railLabel, roles.heading) || roleRows.length > 0,
+    gallery: filled(gallery.railLabel, gallery.heading) || photos.length > 0,
+    contact: filled(contact.railLabel, contact.heading, contact.officialLabel) || columns.length > 0,
+  };
+  const numbers = Object.fromEntries(
+    Object.keys(visible).filter((name) => visible[name]).map((name, i) => [name, String(i + 1).padStart(2, "0")]),
+  );
+  const menu = kept(settings.nav, "label").filter((item) => visible[item.anchor ?? ""] !== false);
 
   return (
     <>
@@ -91,7 +142,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
           <summary><span className="sc" {...f(settings, "menuLabel")}>{settings.menuLabel}</span></summary>
           <nav aria-label="Sections">
             <ol>
-              {settings.nav?.map((item, i) => (
+              {menu.map((item, i) => (
                 <li key={i}><a href={`#${item?.anchor}`} {...f(item, "label")}>{item?.label}</a></li>
               ))}
             </ol>
@@ -101,266 +152,335 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
 
       <main id="main">
         <section className="hero wrap" aria-labelledby="name">
-          <figure className="hero__fig">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              {...portrait}
-              sizes="(min-width: 900px) 38vw, 100vw"
-              fetchPriority="high"
-              decoding="async"
-              alt={hero.portraitAlt ?? ""}
-              {...f(hero, "portrait")}
-            />
-            <figcaption><span {...f(hero, "portraitCredit")}>{hero.portraitCredit}</span></figcaption>
-          </figure>
+          {filled(hero.portrait) && (
+            <figure className="hero__fig">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                {...portrait}
+                sizes="(min-width: 900px) 38vw, 100vw"
+                fetchPriority="high"
+                decoding="async"
+                alt={hero.portraitAlt ?? ""}
+                {...f(hero, "portrait")}
+              />
+              {showSources && filled(hero.portraitCredit) && <figcaption><span {...f(hero, "portraitCredit")}>{hero.portraitCredit}</span></figcaption>}
+            </figure>
+          )}
 
-          <p className="hero__role sc" {...f(hero, "role")}>{hero.role}</p>
+          {filled(hero.role) && <p className="hero__role sc" {...f(hero, "role")}>{hero.role}</p>}
           <h1 id="name" className="hero__name">
-            <span className="hon" {...f(hero, "honorific")}>{hero.honorific}</span>{" "}
+            {filled(hero.honorific) && <span className="hon" {...f(hero, "honorific")}>{hero.honorific}</span>}{" "}
             <span className="ln"><span {...f(hero, "firstName")}>{hero.firstName}</span></span>{" "}
             <span className="ln"><span {...f(hero, "lastName")}>{hero.lastName}</span></span>
           </h1>
-          <p className="hero__line" {...f(hero, "line")}>{hero.line}</p>
+          {filled(hero.line) && <p className="hero__line" {...f(hero, "line")}>{hero.line}</p>}
 
-          <dl className="hero__facts">
-            {hero.facts?.map((fact, i) => (
-              <div key={i}>
-                <dt className="sc" {...f(fact, "label")}>{fact?.label}</dt>
-                <dd {...f(fact, "value")}>{fact?.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-
-        <section id="profile" className="sec wrap" aria-labelledby="h-profile">
-          <Rail number="01" section={profile} field={field} />
-          <div className="body reveal">
-            <h2 id="h-profile" className="h2" {...f(profile, "heading")}>{profile.heading}</h2>
-            <p className="lead fill" {...f(profile, "lead")}>{profile.lead}</p>
-            {profile.paragraphs?.map((paragraph, i) => (
-              <p key={i} {...f(paragraph, "text")}><Inline text={paragraph?.text} /></p>
-            ))}
-            <SourceLine section={profile} field={field} />
-          </div>
-        </section>
-
-        <section className="quote wrap" aria-label="From the Director's Message">
-          <figure className="quote__fig reveal">
-            <blockquote><p {...f(quote, "text")}>{quote.text}</p></blockquote>
-            <figcaption>
-              <Bare field={field} object={quote} property="captionBefore">{quote.captionBefore}</Bare>{" "}
-              <a {...linkTo(quote.linkUrl)} {...f(quote, "linkLabel")}>{quote.linkLabel}</a>
-              <Bare field={field} object={quote} property="captionAfter">{quote.captionAfter}</Bare>
-            </figcaption>
-          </figure>
-        </section>
-
-        <section id="timeline" className="tl" aria-labelledby="h-timeline">
-          <div className="tl__pin">
-            <div className="tl__intro wrap">
-              <Rail number="02" section={timeline} field={field} />
-              <div className="body body--wide">
-                <h2 id="h-timeline" className="h2 reveal" {...f(timeline, "heading")}>{timeline.heading}</h2>
-              </div>
-            </div>
-            <div className="tl__list wrap">
-              <ol className="timeline">
-                {timeline.entries?.map((entry, i) => (
-                  <li key={i}>
-                    <time className="timeline__when" dateTime={entry?.datetime || undefined} {...f(entry, "when")}>{entry?.when}</time>
-                    <div>
-                      <h3 className="h3" {...f(entry, "title")}>{entry?.title}</h3>
-                      <p {...f(entry, "text")}>{entry?.text}</p>
-                      <p className="src"><Links items={entry?.sources} separator=" · " field={field} /></p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className="tl__bar" aria-hidden="true"><span /></div>
-          </div>
-        </section>
-
-        <section id="research" className="sec wrap" aria-labelledby="h-research">
-          <Rail number="03" section={research} field={field} />
-          <div className="body body--wide">
-            <h2 id="h-research" className="h2 reveal" {...f(research, "heading")}>{research.heading}</h2>
-            <div className="research">
-              <div className="reveal">
-                <p className="lead fill" {...f(research, "lead")}>{research.lead}</p>
-                <dl className="areas">
-                  {research.areas?.map((area, i) => (
-                    <div key={i}>
-                      <dt {...f(area, "name")}>{area?.name}</dt>
-                      <dd {...f(area, "description")}>{area?.description}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <SourceLine section={research} field={field} />
-              </div>
-
-              <div className="research__side reveal">
-                {research.notes?.map((note, i) => (
-                  <Fragment key={i}>
-                    <h3 className="h3" {...f(note, "heading")}>{note?.heading}</h3>
-                    <p {...f(note, "text")}>{note?.text}</p>
-                  </Fragment>
-                ))}
-              </div>
-            </div>
-
-            <h3 className="h3 h3--rule reveal" {...f(research, "papersHeading")}>{research.papersHeading}</h3>
-            <ol className="pubs reveal">
-              {research.papers?.map((paper, i) => (
-                <li key={i}>
-                  <span className="pubs__yr" {...f(paper, "year")}>{paper?.year}</span>
-                  <span>
-                    <a {...linkTo(paper?.url)} {...f(paper, "title")}>{paper?.title}</a>
-                    <br />
-                    <i {...f(paper, "journal")}>{paper?.journal}</i>,{" "}
-                    <Bare field={field} object={paper} property="coauthors">{paper?.coauthors}</Bare>
-                  </span>
-                </li>
-              ))}
-            </ol>
-
-            <h3 className="h3 h3--rule reveal" {...f(research, "booksHeading")}>{research.booksHeading}</h3>
-            <p className="reveal">
-              {research.books?.map((book, i) => (
-                <Fragment key={i}>
-                  {i > 0 && "; "}
-                  <i {...f(book, "title")}>{book?.title}</i>{" ("}
-                  <Bare field={field} object={book} property="publisher">{book?.publisher}</Bare>)
-                </Fragment>
-              ))}.
-            </p>
-          </div>
-        </section>
-
-        <section id="institute" className="sec sec--deep wrap" aria-labelledby="h-institute">
-          <Rail number="04" section={institute} field={field} />
-          <div className="body body--wide">
-            <h2 id="h-institute" className="h2 reveal" {...f(institute, "heading")}>{institute.heading}</h2>
-            {institute.ledgers?.map((ledger, i) => (
-              <div className="ledger reveal" key={i}>
-                <h3 className="ledger__head sc" {...f(ledger, "heading")}>{ledger?.heading}</h3>
-                <dl>
-                  {ledger?.rows?.map((row, j) => (
-                    <div key={j}>
-                      <dt {...f(row, "label")}>{row?.label}</dt>
-                      <dd {...f(row, "text")}>{row?.text}</dd>
-                      <dd className="src"><a {...linkTo(row?.sourceUrl)} {...f(row, "sourceLabel")}>{row?.sourceLabel}</a></dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="roles" className="sec wrap" aria-labelledby="h-roles">
-          <Rail number="05" section={roles} field={field} />
-          <div className="body body--wide">
-            <h2 id="h-roles" className="h2 reveal" {...f(roles, "heading")}>{roles.heading}</h2>
-            <div className="roles reveal">
-              <dl>
-                {roles.roles?.map((role, i) => (
-                  <div key={i}>
-                    <dt {...f(role, "label")}>{role?.label}</dt>
-                    <dd {...f(role, "text")}><Inline text={role?.text} /></dd>
-                  </div>
-                ))}
-              </dl>
-              <SourceLine section={roles} field={field} />
-            </div>
-          </div>
-        </section>
-
-        <section id="gallery" className="sec sec--deep wrap gallery" aria-labelledby="h-gallery">
-          <Rail number="06" section={gallery} field={field} />
-          <div className="body body--wide">
-            <h2 id="h-gallery" className="h2 reveal" {...f(gallery, "heading")}>{gallery.heading}</h2>
-          </div>
-
-          {gallery.items?.slice(0, GALLERY_SLOTS.length).map((item, i) => {
-            const { slot, sizes, target } = GALLERY_SLOTS[i];
-            return (
-              <figure className={`g g--${slot} reveal`} key={i}>
-                <div className="frame">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    {...responsive(item?.image, target)}
-                    sizes={sizes}
-                    loading="lazy"
-                    decoding="async"
-                    alt={item?.alt ?? ""}
-                    {...f(item, "image")}
-                  />
+          {facts.length > 0 && (
+            <dl className="hero__facts">
+              {facts.map((fact, i) => (
+                <div key={i}>
+                  {filled(fact.label) && <dt className="sc" {...f(fact, "label")}>{fact.label}</dt>}
+                  {filled(fact.value) && <dd {...f(fact, "value")}>{fact.value}</dd>}
                 </div>
+              ))}
+            </dl>
+          )}
+        </section>
+
+        {visible.profile && (
+          <section id="profile" className="sec wrap" {...labelled("h-profile", profile.heading)}>
+            <Rail number={numbers.profile} section={profile} field={field} />
+            <div className="body reveal">
+              {filled(profile.heading) && <h2 id="h-profile" className="h2" {...f(profile, "heading")}>{profile.heading}</h2>}
+              {filled(profile.lead) && <p className="lead fill" {...f(profile, "lead")}>{profile.lead}</p>}
+              {paragraphs.map((paragraph, i) => (
+                <p key={i} {...f(paragraph, "text")}><Inline text={paragraph.text} /></p>
+              ))}
+              {showSources && <SourceLine section={profile} field={field} />}
+            </div>
+          </section>
+        )}
+
+        {filled(quote.text, quote.captionBefore, quote.linkLabel, quote.captionAfter) && (
+          <section className="quote wrap" aria-label="From the Director's Message">
+            <figure className="quote__fig reveal">
+              {filled(quote.text) && <blockquote><p {...f(quote, "text")}>{quote.text}</p></blockquote>}
+              {filled(quote.captionBefore, quote.linkLabel, quote.captionAfter) && (
                 <figcaption>
-                  <Bare field={field} object={item} property="caption">{item?.caption}</Bare>{" "}
-                  <span className="credit" {...f(item, "credit")}>{item?.credit}</span>
+                  <Bare field={field} object={quote} property="captionBefore">{quote.captionBefore}</Bare>{" "}
+                  {filled(quote.linkLabel) && <a {...linkTo(quote.linkUrl)} {...f(quote, "linkLabel")}>{quote.linkLabel}</a>}
+                  <Bare field={field} object={quote} property="captionAfter">{quote.captionAfter}</Bare>
                 </figcaption>
-              </figure>
-            );
-          })}
-        </section>
+              )}
+            </figure>
+          </section>
+        )}
 
-        <section id="contact" className="sec wrap" aria-labelledby="h-contact">
-          <Rail number="07" section={contact} field={field} />
-          <div className="body body--wide">
-            <h2 id="h-contact" className="h2 reveal" {...f(contact, "heading")}>{contact.heading}</h2>
-            <div className="contact reveal">
-              {contact.columns?.map((column, i) => (
-                <div className="contact__col" key={i}>
-                  <h3 className="sc" {...f(column, "heading")}>{column?.heading}</h3>
-                  <ul>
-                    {column?.rows?.map((row, j) => (
-                      <li key={j}>
-                        <span className="k" {...f(row, "label")}>{row?.label}</span>
-                        {row?.href ? (
-                          <a {...linkTo(row.href)} {...f(row, "value")}>{row.value}</a>
-                        ) : (
-                          <Bare field={field} object={row} property="value">{row?.value}</Bare>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="src">
-                    <Bare field={field} object={contact} property="sourcePrefix">{contact.sourcePrefix}</Bare>{" "}
-                    <a {...linkTo(column?.sourceUrl)} {...f(column, "sourceLabel")}>{column?.sourceLabel}</a>
-                  </p>
+        {visible.timeline && (
+          <section id="timeline" className="tl" {...labelled("h-timeline", timeline.heading)}>
+            <div className="tl__pin">
+              <div className="tl__intro wrap">
+                <Rail number={numbers.timeline} section={timeline} field={field} />
+                <div className="body body--wide">
+                  {filled(timeline.heading) && <h2 id="h-timeline" className="h2 reveal" {...f(timeline, "heading")}>{timeline.heading}</h2>}
+                </div>
+              </div>
+              <div className="tl__list wrap">
+                <ol className="timeline">
+                  {entries.map((entry, i) => (
+                    <li key={i}>
+                      {filled(entry.when) && <time className="timeline__when" dateTime={entry.datetime || undefined} {...f(entry, "when")}>{entry.when}</time>}
+                      <div>
+                        {filled(entry.title) && <h3 className="h3" {...f(entry, "title")}>{entry.title}</h3>}
+                        {filled(entry.text) && <p {...f(entry, "text")}>{entry.text}</p>}
+                        {showSources && hasLinks(entry.sources) && <p className="src"><Links items={entry.sources} separator=" · " field={field} /></p>}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div className="tl__bar" aria-hidden="true"><span /></div>
+            </div>
+          </section>
+        )}
+
+        {visible.research && (
+          <section id="research" className="sec wrap" {...labelled("h-research", research.heading)}>
+            <Rail number={numbers.research} section={research} field={field} />
+            <div className="body body--wide">
+              {filled(research.heading) && <h2 id="h-research" className="h2 reveal" {...f(research, "heading")}>{research.heading}</h2>}
+              {(researchMain || notes.length > 0) && (
+                <div className="research">
+                  {researchMain && (
+                    <div className="reveal">
+                      {filled(research.lead) && <p className="lead fill" {...f(research, "lead")}>{research.lead}</p>}
+                      {areas.length > 0 && (
+                        <dl className="areas">
+                          {areas.map((area, i) => (
+                            <div key={i}>
+                              {filled(area.name) && <dt {...f(area, "name")}>{area.name}</dt>}
+                              {filled(area.description) && <dd {...f(area, "description")}>{area.description}</dd>}
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                      {showSources && <SourceLine section={research} field={field} />}
+                    </div>
+                  )}
+
+                  {notes.length > 0 && (
+                    <div className="research__side reveal">
+                      {notes.map((note, i) => (
+                        <Fragment key={i}>
+                          {filled(note.heading) && <h3 className="h3" {...f(note, "heading")}>{note.heading}</h3>}
+                          {filled(note.text) && <p {...f(note, "text")}>{note.text}</p>}
+                        </Fragment>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {filled(research.papersHeading) && <h3 className="h3 h3--rule reveal" {...f(research, "papersHeading")}>{research.papersHeading}</h3>}
+              {papers.length > 0 && (
+                <ol className="pubs reveal">
+                  {papers.map((paper, i) => (
+                    <li key={i}>
+                      {filled(paper.year) && <span className="pubs__yr" {...f(paper, "year")}>{paper.year}</span>}
+                      <span>
+                        {filled(paper.title) && <a {...linkTo(paper.url)} {...f(paper, "title")}>{paper.title}</a>}
+                        {filled(paper.title) && filled(paper.journal, paper.coauthors) && <br />}
+                        {filled(paper.journal) && <i {...f(paper, "journal")}>{paper.journal}</i>}
+                        {filled(paper.journal) && filled(paper.coauthors) && <>,{" "}</>}
+                        <Bare field={field} object={paper} property="coauthors">{paper.coauthors}</Bare>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+
+              {filled(research.booksHeading) && <h3 className="h3 h3--rule reveal" {...f(research, "booksHeading")}>{research.booksHeading}</h3>}
+              {books.length > 0 && (
+                <p className="reveal">
+                  {books.map((book, i) => (
+                    <Fragment key={i}>
+                      {i > 0 && "; "}
+                      {filled(book.title) && <i {...f(book, "title")}>{book.title}</i>}
+                      {filled(book.publisher) && (
+                        <>
+                          {filled(book.title) ? " (" : "("}
+                          <Bare field={field} object={book} property="publisher">{book.publisher}</Bare>)
+                        </>
+                      )}
+                    </Fragment>
+                  ))}.
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {visible.institute && (
+          <section id="institute" className="sec sec--deep wrap" {...labelled("h-institute", institute.heading)}>
+            <Rail number={numbers.institute} section={institute} field={field} />
+            <div className="body body--wide">
+              {filled(institute.heading) && <h2 id="h-institute" className="h2 reveal" {...f(institute, "heading")}>{institute.heading}</h2>}
+              {ledgers.map(({ ledger, rows }, i) => (
+                <div className="ledger reveal" key={i}>
+                  {filled(ledger?.heading) && <h3 className="ledger__head sc" {...f(ledger, "heading")}>{ledger?.heading}</h3>}
+                  {rows.length > 0 && (
+                    <dl>
+                      {rows.map((row, j) => (
+                        <div key={j}>
+                          {filled(row.label) && <dt {...f(row, "label")}>{row.label}</dt>}
+                          {filled(row.text) && <dd {...f(row, "text")}>{row.text}</dd>}
+                          {showSources && filled(row.sourceLabel) && <dd className="src"><a {...linkTo(row.sourceUrl)} {...f(row, "sourceLabel")}>{row.sourceLabel}</a></dd>}
+                        </div>
+                      ))}
+                    </dl>
+                  )}
                 </div>
               ))}
             </div>
-            <p className="official reveal">
-              <a className="official__link" {...linkTo(contact.officialUrl)} {...f(contact, "officialLabel")}>{contact.officialLabel}</a>
-            </p>
-          </div>
-        </section>
+          </section>
+        )}
+
+        {visible.roles && (
+          <section id="roles" className="sec wrap" {...labelled("h-roles", roles.heading)}>
+            <Rail number={numbers.roles} section={roles} field={field} />
+            <div className="body body--wide">
+              {filled(roles.heading) && <h2 id="h-roles" className="h2 reveal" {...f(roles, "heading")}>{roles.heading}</h2>}
+              {roleRows.length > 0 && (
+                <div className="roles reveal">
+                  <dl>
+                    {roleRows.map((role, i) => (
+                      <div key={i}>
+                        {filled(role.label) && <dt {...f(role, "label")}>{role.label}</dt>}
+                        {filled(role.text) && <dd {...f(role, "text")}><Inline text={role.text} /></dd>}
+                      </div>
+                    ))}
+                  </dl>
+                  {showSources && <SourceLine section={roles} field={field} />}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {visible.gallery && (
+          <section id="gallery" className="sec sec--deep wrap gallery" {...labelled("h-gallery", gallery.heading)}>
+            <Rail number={numbers.gallery} section={gallery} field={field} />
+            <div className="body body--wide">
+              {filled(gallery.heading) && <h2 id="h-gallery" className="h2 reveal" {...f(gallery, "heading")}>{gallery.heading}</h2>}
+            </div>
+
+            {photos.map((item, i) => {
+              const { slot, sizes, target } = GALLERY_SLOTS[i];
+              const credit = showSources && filled(item.credit);
+              return (
+                <figure className={`g g--${slot} reveal`} key={i}>
+                  {filled(item.image) && (
+                    <div className="frame">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        {...responsive(item.image, target)}
+                        sizes={sizes}
+                        loading="lazy"
+                        decoding="async"
+                        alt={item.alt ?? ""}
+                        {...f(item, "image")}
+                      />
+                    </div>
+                  )}
+                  {(filled(item.caption) || credit) && (
+                    <figcaption>
+                      <Bare field={field} object={item} property="caption">{item.caption}</Bare>{" "}
+                      {credit && <span className="credit" {...f(item, "credit")}>{item.credit}</span>}
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            })}
+          </section>
+        )}
+
+        {visible.contact && (
+          <section id="contact" className="sec wrap" {...labelled("h-contact", contact.heading)}>
+            <Rail number={numbers.contact} section={contact} field={field} />
+            <div className="body body--wide">
+              {filled(contact.heading) && <h2 id="h-contact" className="h2 reveal" {...f(contact, "heading")}>{contact.heading}</h2>}
+              {columns.length > 0 && (
+                <div className="contact reveal">
+                  {columns.map(({ column, rows }, i) => (
+                    <div className="contact__col" key={i}>
+                      {filled(column?.heading) && <h3 className="sc" {...f(column, "heading")}>{column?.heading}</h3>}
+                      {rows.length > 0 && (
+                        <ul>
+                          {rows.map((row, j) => (
+                            <li key={j}>
+                              {filled(row.label) ? (
+                                <span className="k" {...f(row, "label")}>{row.label}</span>
+                              ) : (
+                                <span className="k" aria-hidden="true" />
+                              )}
+                              {filled(row.value) && (row.href ? (
+                                <a {...linkTo(row.href)} {...f(row, "value")}>{row.value}</a>
+                              ) : (
+                                <Bare field={field} object={row} property="value">{row.value}</Bare>
+                              ))}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {showSources && filled(column?.sourceLabel) && (
+                        <p className="src">
+                          <Bare field={field} object={contact} property="sourcePrefix">{contact.sourcePrefix}</Bare>{" "}
+                          <a {...linkTo(column?.sourceUrl)} {...f(column, "sourceLabel")}>{column?.sourceLabel}</a>
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {filled(contact.officialLabel) && (
+                <p className="official reveal">
+                  <a className="official__link" {...linkTo(contact.officialUrl)} {...f(contact, "officialLabel")}>{contact.officialLabel}</a>
+                </p>
+              )}
+            </div>
+          </section>
+        )}
       </main>
 
-      <footer className="foot" role="contentinfo">
-        <div className="wrap foot__grid">
-          <div className="foot__notice">
-            <h2 className="sc" {...f(footer, "heading")}>{footer.heading}</h2>
-            <p><a {...linkTo(footer.linkUrl)} {...f(footer, "linkLabel")}>{footer.linkLabel}</a></p>
-            <p>{DISCLAIMER}</p>
-            <p className="foot__date">
-              <Bare field={field} object={footer} property="updatedLabel">{footer.updatedLabel}</Bare>{" "}
-              <time dateTime={footer.updatedDate ?? undefined} {...f(footer, "updatedText")}>{footer.updatedText}</time>
-            </p>
+      {(footerNotice || footerSources.length > 0) && (
+        <footer className="foot" role="contentinfo">
+          <div className="wrap foot__grid">
+            {footerNotice && (
+              <div className="foot__notice">
+                {filled(footer.heading) && <h2 className="sc" {...f(footer, "heading")}>{footer.heading}</h2>}
+                {filled(footer.linkLabel) && <p><a {...linkTo(footer.linkUrl)} {...f(footer, "linkLabel")}>{footer.linkLabel}</a></p>}
+                {filled(footer.notice) && <p {...f(footer, "notice")}>{footer.notice}</p>}
+                {filled(footer.updatedText) && (
+                  <p className="foot__date">
+                    <Bare field={field} object={footer} property="updatedLabel">{footer.updatedLabel}</Bare>{" "}
+                    <time dateTime={footer.updatedDate ?? undefined} {...f(footer, "updatedText")}>{footer.updatedText}</time>
+                  </p>
+                )}
+              </div>
+            )}
+            {footerSources.length > 0 && (
+              <div className="foot__src">
+                {filled(footer.sourcesHeading) && <h2 className="sc" {...f(footer, "sourcesHeading")}>{footer.sourcesHeading}</h2>}
+                <ol>
+                  {footerSources.map((source, i) => (
+                    <li key={i}><a {...linkTo(source?.url)} {...f(source, "label")}>{source?.label}</a></li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
-          <div className="foot__src">
-            <h2 className="sc" {...f(footer, "sourcesHeading")}>{footer.sourcesHeading}</h2>
-            <ol>
-              {footer.sources?.map((source, i) => (
-                <li key={i}><a {...linkTo(source?.url)} {...f(source, "label")}>{source?.label}</a></li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </>
   );
 }

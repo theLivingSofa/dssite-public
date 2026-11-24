@@ -7,6 +7,18 @@
     var sync = function () { nav.open = wide.matches; };
     sync();
     wide.addEventListener('change', sync);
+    nav.addEventListener('click', function (event) {
+      var link = event.target.closest('nav a');
+      if (!link || wide.matches) return;
+      // Close first, because the open menu moves the page and would spoil the jump.
+      var href = link.getAttribute('href');
+      var target = document.querySelector(href);
+      nav.open = false;
+      if (!target) return;
+      event.preventDefault();
+      if (location.hash === href) target.scrollIntoView();
+      else location.hash = href;
+    });
   }
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;

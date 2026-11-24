@@ -11,6 +11,8 @@ import {
 const GEMINI_MODEL = "gemini-flash-lite-latest";
 const CLOUDFLARE_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const MODEL_TIMEOUT_MS = 6000;
+const TOTAL_TIME_MS = 14000;
+const MIN_RECHECK_MS = 2000;
 const MAX_BODY_BYTES = 32 * 1024;
 const LOGIN_TIMEOUT_MS = 2000;
 const MAX_LOGIN_HEADER = 8192;
@@ -38,12 +40,12 @@ async function isSignedIn(request, env) {
   }
 }
 
-async function askGemini(items, env) {
+async function askGemini(items, env, timeoutMs) {
   if (!env.GEMINI_API_KEY) throw new Error("no Gemini key");
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-    signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs),
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents: [{ role: "user", parts: [{ text: userPrompt(items) }] }],
@@ -55,7 +57,7 @@ async function askGemini(items, env) {
   return (data.candidates?.[0]?.content?.parts ?? []).map((part) => part.text ?? "").join("");
 }
 
-async function askCloudflare(items, env) {
+async function askCloudflare(items, env, timeoutMs) {
   if (!env.AI) throw new Error("no Workers AI binding");
   const answer = await Promise.race([
     env.AI.run(CLOUDFLARE_MODEL, {
@@ -66,10 +68,27 @@ async function askCloudflare(items, env) {
         { role: "user", content: userPrompt(items) },
       ],
     }),
-    new Promise((_, reject) => setTimeout(() => reject(new Error("Workers AI timed out")), MODEL_TIMEOUT_MS)),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Workers AI timed out")), timeoutMs)),
   ]);
   const reply = answer?.response ?? answer?.choices?.[0]?.message?.content;
   return typeof reply === "string" ? reply : JSON.stringify(reply);
+}
+
+// Models can stop after the first mistake, so check once more with those fixes applied.
+async function findMistakes(ask, items, env, deadline) {
+  const timeLeft = () => Math.min(MODEL_TIMEOUT_MS, deadline - Date.now());
+  const first = cleanSuggestions(parseModelReply(await ask(items, env, timeLeft())), items);
+  if (!first.length || timeLeft() < MIN_RECHECK_MS) return first;
+  const corrected = items.map((item) => ({
+    ...item,
+    text: first.filter(({ id }) => id === item.id).reduce((text, fix) => text.replace(fix.original, fix.replacement), item.text),
+  }));
+  try {
+    const second = parseModelReply(await ask(corrected, env, timeLeft()));
+    return cleanSuggestions({ suggestions: [...first, ...(Array.isArray(second?.suggestions) ? second.suggestions : [])] }, items);
+  } catch {
+    return first;
+  }
 }
 
 export async function onRequestPost({ request, env }) {
@@ -89,9 +108,11 @@ export async function onRequestPost({ request, env }) {
   }
   if (!validItems(items)) return json({ error: "bad request" }, 400);
 
+  const deadline = Date.now() + TOTAL_TIME_MS;
   for (const ask of [askGemini, askCloudflare]) {
+    if (deadline - Date.now() < MIN_RECHECK_MS) break;
     try {
-      return json({ checked: true, suggestions: cleanSuggestions(parseModelReply(await ask(items, env)), items) });
+      return json({ checked: true, suggestions: await findMistakes(ask, items, env, deadline) });
     } catch {
       // Try the next free model.
     }
