@@ -21,7 +21,7 @@ Automatic checks run, and the changes go live about five minutes later. If a sav
 
 ## First-time setup
 
-Follow **Things only Ayush can do** in [SECURITY.md](SECURITY.md). It covers GitHub, TinaCloud and Cloudflare Pages in the right order.
+The owner keeps a private setup checklist for GitHub, TinaCloud and Cloudflare Pages.
 
 ### Connecting a custom domain
 

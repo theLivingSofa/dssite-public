@@ -19,7 +19,7 @@ Drafts stay in the editor's browser and are not sent anywhere until Publish. The
 | Who | What they would try | What stops them |
 |---|---|---|
 | Random vandal | Open `/admin` and edit | The login page is public, but TinaCloud rejects any save without an invited login |
-| Random vandal | Push to GitHub or open a pull request | No write access. Only saves on `edits` publish automatically |
+| Random vandal | Push to GitHub or open a pull request | No write access. Only saves on this repository's own `edits` branch publish automatically, so a fork with the same branch name is ignored |
 | Random vandal | Run up the AI quota | The proofreader only answers people logged in to this TinaCloud project |
 | Anyone | Trick the AI with text inside an edit | The AI cannot save or publish. Its suggestions are filtered, and an editor must accept them |
 | Random vandal | Find a leaked key | No secrets in the repo or browser files. The only build token is read-only |
@@ -71,8 +71,8 @@ Drafts stay in the editor's browser and are not sent anywhere until Publish. The
 ### 4. Content safety
 
 - All fields are plain typed text with length limits. There is no raw HTML, MDX or rich-text field.
-- `scripts/validate-content.mjs` enforces the rules on every build and every change to `edits`. It rejects HTML, unsafe links, unknown fields, hidden characters, wrong file types and missing sources.
-- Every timeline entry, milestone, role and publication needs an https source.
+- `scripts/validate-content.mjs` enforces the rules on every build and every change to `edits`. It rejects HTML, unsafe links, unknown fields, hidden characters, wrong file types and missing sources on milestones, roles and publications.
+- Every milestone, role and publication needs an https source. Any source added to a timeline entry must also be https.
 - External links use `rel="noopener noreferrer"`.
 - A strict Content-Security-Policy and standard security headers are set in `public/_headers`.
 - The footer notice is an ordinary CMS field with the same plain-text rules as other text, so anyone with editor access can change or remove it.
@@ -157,57 +157,9 @@ Secure it first. It receives password resets for everything else.
 
 ---
 
-## Things only Ayush can do
-
-Do these in order. Each one needs your own login.
-
-**1. Turn on 2FA**
-
-- [ ] **Email inbox:** turn on 2-step verification. Do this first.
-- [ ] **GitHub:** Settings > Password and authentication > Enable two-factor authentication.
-- [ ] **Cloudflare:** My Profile > Authentication > Two-Factor Authentication.
-- [ ] **TinaCloud:** sign in with GitHub so it is covered by your GitHub 2FA.
-
-**2. Connect TinaCloud**
-
-- [ ] At [app.tina.io](https://app.tina.io), create a project from `theLivingSofa/dssite-public`.
-- [ ] Copy the **Client ID**, and create a **read-only** token.
-- [ ] Leave Git co-authoring **off**. It would publish editors' email addresses in this public repo.
-
-**3. Connect Cloudflare Pages**
-
-- [ ] **Workers & Pages > Create application > Pages > Connect to Git**, and pick `dssite-public`.
-- [ ] Production branch: `production`. Build command: `npm run build`. Output directory: `out`.
-- [ ] Add `NEXT_PUBLIC_TINA_CLIENT_ID`, and add `TINA_TOKEN` as a **Secret**.
-- [ ] Under **Settings > Build > Branch control**, set preview branches to **None**.
-- [ ] Add your `pages.dev` address to **Site URLs** in TinaCloud.
-
-**4. Turn on the free proofreader**
-
-- [ ] At [aistudio.google.com/apikey](https://aistudio.google.com/apikey), create a key. **Don't add billing or a card.**
-- [ ] In the Pages project, add `GEMINI_API_KEY` as a **Secret**.
-- [ ] Under **Settings > Bindings > Add > Workers AI**, name the binding `AI`. This is the free backup.
-- [ ] Redeploy.
-
-**5. Turn on your alerts**
-
-- [ ] GitHub **Settings > Notifications**: turn on email for **Participating, @mentions and custom**.
-- [ ] Open this repo and set **Watch** to **Participating and @mentions**.
-
-**6. Hand over**
-
-- [ ] Invite the new editor in TinaCloud as **Editor**, using their own email and a strong, unique password.
-- [ ] Send them [EDITOR-GUIDE.md](EDITOR-GUIDE.md).
-- [ ] Turn on **auto-renew** for the domain, with a payment method that will not expire soon.
-- [ ] Remove the old Netlify site once this one is live.
-
-**After that:** you only need to act if an email says a save failed, the live site check failed, or a change looks wrong.
-
----
-
 ## Residual risks
 
-- **Your GitHub account is the master key.** Whoever controls it can turn off every protection. 2FA is the most important step on this page.
+- **Your GitHub account is the master key.** Whoever controls it can turn off every protection. 2FA is the most important protection.
 - **The Tina login is the only gate to editing.** There is no second login, so a stolen Tina password or email inbox could publish a change.
 - **Cloudflare can bypass Git.** Someone in your Cloudflare account can change what is deployed. Cloudflare's GitHub app also has administration write access to this repo, so a compromised Cloudflare account or app could change repo settings.
 - **Nobody reviews a change before it is public.** The checks and the AI catch dangerous content and typos, not false content. A stolen editor login could publish a false claim until someone notices. A source link proves that a link exists, not that it supports the claim.

@@ -45,7 +45,8 @@ const forbidden = [];
 const walk = (dir) => {
   for (const name of readdirSync(dir)) {
     const full = path.join(dir, name);
-    if (statSync(full).isDirectory()) walk(full);
+    if (name === ".DS_Store") rmSync(full);
+    else if (statSync(full).isDirectory()) walk(full);
     else if (/\.(md|mdx|py|env)$/i.test(name) || name.startsWith(".env")) forbidden.push(path.relative(OUT, full));
   }
 };
