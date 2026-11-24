@@ -49,14 +49,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="icon" href={ICON} />
         <link rel="preload" href="/assets/fonts/newsreader-var.woff2" as="font" type="font/woff2" crossOrigin="" />
         <link rel="preload" href="/assets/fonts/hanken-grotesk-var.woff2" as="font" type="font/woff2" crossOrigin="" />
-        <link
-          rel="preload"
-          as="image"
-          href={portrait.src}
-          imageSrcSet={portrait.srcSet}
-          imageSizes="(min-width: 900px) 38vw, 100vw"
-          fetchPriority="high"
-        />
+        {portrait.src && (
+          <link
+            rel="preload"
+            as="image"
+            href={portrait.src}
+            imageSrcSet={portrait.srcSet}
+            imageSizes="(min-width: 900px) 38vw, 100vw"
+            fetchPriority="high"
+          />
+        )}
         <link rel="stylesheet" href="/css/main.css" />
         {(s.customFonts?.length ?? 0) > 0 && <link rel="stylesheet" href="/css/custom-fonts.css" />}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />

@@ -4,7 +4,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { IMAGE_EXTENSIONS, IMAGE_KEYS, MAX_IMAGE_BYTES, MAX_LIST_ITEMS, fieldError, httpsError } from "../lib/content-rules.mjs";
-import { FONT_CHOICES, FONT_EXTENSIONS, MAX_CUSTOM_FONTS, fontBytesError, fontFileError, fontNameError } from "../lib/fonts.mjs";
+import { FONT_CHOICES, FONT_DEFAULT, FONT_EXTENSIONS, MAX_CUSTOM_FONTS, fontBytesError, fontFileError, fontNameError } from "../lib/fonts.mjs";
 
 const HERE = path.resolve(import.meta.dirname, "..");
 const ROOT = path.resolve(process.argv[2] ?? HERE);
@@ -73,7 +73,6 @@ const needsSource = (where, url) => {
   if (error) fail(where, error);
 };
 docs.timeline?.entries?.forEach((entry, i) => {
-  if (!entry.sources?.length) fail(`timeline.entries[${i}]`, "needs at least one source");
   entry.sources?.forEach((source, j) => needsSource(`timeline.entries[${i}].sources[${j}]`, source.url));
 });
 docs.institute?.ledgers?.forEach((ledger, i) =>
@@ -83,7 +82,7 @@ docs.roles?.roles?.forEach((role, i) => needsSource(`roles.roles[${i}]`, role.so
 docs.research?.papers?.forEach((paper, i) => needsSource(`research.papers[${i}]`, paper.url));
 docs.research?.books?.forEach((book, i) => needsSource(`research.books[${i}]`, book.sourceUrl));
 
-for (const key of ["firstName", "lastName", "role"]) {
+for (const key of ["firstName", "lastName"]) {
   if (!docs.hero?.[key]) fail(`hero.${key}`, "cannot be empty");
 }
 if ((docs.gallery?.items?.length ?? 0) > 7) fail("gallery.items", "the layout holds seven photos");
@@ -103,7 +102,7 @@ for (const [kind, value] of Object.entries(docs.settings?.typography ?? {})) {
 }
 const customFonts = docs.settings?.customFonts ?? [];
 if (customFonts.length > MAX_CUSTOM_FONTS) fail("settings.customFonts", `has more than ${MAX_CUSTOM_FONTS} fonts`);
-const fontNames = new Set(FONT_CHOICES);
+const fontNames = new Set([...FONT_CHOICES, FONT_DEFAULT]);
 customFonts.forEach(({ name, file }, i) => {
   const where = `settings.customFonts[${i}]`;
   const nameProblem = fontNameError(name);

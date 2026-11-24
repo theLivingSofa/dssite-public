@@ -15,7 +15,7 @@ Use a strong password that you don't use anywhere else, and please don't share y
 2. Type in the box that opens on the left. The page updates as you type.
 3. Press **Save draft**. The spelling check runs every time.
 4. If a box lists possible mistakes, untick anything that's correct, such as a name. Then press **Fix it and save**, **Edit and save** to correct it yourself, or **Save anyway**.
-5. When all your changes look right, press **Publish** at the bottom right. They go live together in about four minutes.
+5. When all your changes look right, press **Publish**, just above **Save draft**. They go live together in about five minutes.
 
 Drafts stay in this browser on this computer. If the page closes or reloads, the editor offers to **Restore** them.
 
@@ -25,9 +25,9 @@ Drafts stay in this browser on this computer. If the page closes or reloads, the
 2. To keep it for only that text, press **Save draft**. Press **Undo** to go back.
 3. To change every text of that kind, press the second button, such as **All section headings**. You can keep flipping through fonts, then press **Save draft for all section headings** or **Cancel**.
 
-The big name has its own setting and never changes with the others. Choose **Site default** to go back to the original font.
+The big name has its own setting and never changes with the others. Choose **Site default** to go back to the original font. If its whole kind has a font, **Same as all** follows that font and **Site default** keeps this one text original.
 
-**To add a new font:** open **11 Site settings and sharing**, go to **Uploaded fonts**, choose a WOFF2, TTF or OTF file, press **Upload font**, **Save draft**, then **Publish**. It appears in the Font menus about four minutes later, after you refresh the page. Only upload fonts you have the right to use.
+**To add a new font:** open **11 Site settings and sharing**, go to **Uploaded fonts**, choose a WOFF2, TTF or OTF file, press **Upload font**, **Save draft**, then **Publish**. It appears in the Font menus about five minutes later, after you refresh the page. Only upload fonts you have the right to use.
 
 ## Change a photo
 
@@ -37,6 +37,18 @@ The big name has its own setting and never changes with the others. Choose **Sit
 4. Select it, press **Insert**, then press **Save draft** and **Publish**.
 
 The photo gets the site's colour style by itself after you save.
+
+## Delete something
+
+Click the text and press **Delete** under its box. It leaves the page and the spacing closes up. **Restore** brings it back. Press **Save draft**, then **Publish** when you are happy.
+
+To delete a whole item, such as a timeline entry, paper or photo, open its list and press the bin icon beside it. A section disappears once everything in it is deleted.
+
+## Hide the small source lines
+
+Open **11 Site settings and sharing** and turn on **Hide sources and photo credits**. Press **Save draft**, then **Publish**. The lines stay saved, so turning the switch off brings them back.
+
+To change the statement in the dark footer, open **10 Footer** and edit **Footer notice**.
 
 ## Good to know
 

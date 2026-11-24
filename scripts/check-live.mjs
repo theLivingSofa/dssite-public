@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { DISCLAIMER, IMAGE_KEYS, URL_KEYS } from "../lib/content-rules.mjs";
+import { IMAGE_KEYS, URL_KEYS } from "../lib/content-rules.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const base = process.env.LIVE_URL?.trim();
@@ -13,6 +13,7 @@ const MAX_UNEXPECTED_CHARS = 240;
 const SKIP_KEYS = new Set([...URL_KEYS, ...IMAGE_KEYS, "href", "anchor", "datetime", "updatedDate", "alt", "portraitAlt", "shareImageAlt",
   "description", "shareDescription", "title", "siteName", "shareTitle", "person"]);
 const KEEP_IN = new Set(["timeline", "research"]);
+const SOURCE_KEYS = new Set(["sources", "sourcesLabel", "sourcesHeading", "sourceLabel", "sourcePrefix", "portraitCredit", "credit"]);
 
 if (!base) {
   console.log("LIVE_URL is not set yet, so there is nothing to check.");
@@ -32,18 +33,25 @@ const visibleText = (html) => {
 
 function expectedStrings() {
   const found = [];
-  const walk = (value, key, doc) => {
-    if (Array.isArray(value)) value.forEach((item) => walk(item, key, doc));
-    else if (value && typeof value === "object") Object.entries(value).forEach(([k, v]) => walk(v, k, doc));
-    else if (typeof value === "string" && value && (!SKIP_KEYS.has(key) || (key === "title" && KEEP_IN.has(doc)) || (key === "description" && doc === "research"))) found.push(value);
+  const optional = [];
+  // Font names are settings. Source lines can be hidden, so they are allowed but not required.
+  const walk = (value, key, doc, soft = false) => {
+    if (key.endsWith("Font")) return;
+    const maybe = soft || SOURCE_KEYS.has(key);
+    if (Array.isArray(value)) value.forEach((item) => walk(item, key, doc, maybe));
+    else if (value && typeof value === "object") Object.entries(value).forEach(([k, v]) => walk(v, k, doc, maybe));
+    else if (typeof value === "string" && value.trim() && (!SKIP_KEYS.has(key) || (key === "title" && KEEP_IN.has(doc)) || (key === "description" && doc === "research"))) (maybe ? optional : found).push(value);
   };
   for (const file of readdirSync(path.join(ROOT, "content/site"))) {
     const doc = path.basename(file, ".json");
     const data = JSON.parse(readFileSync(path.join(ROOT, "content/site", file), "utf8"));
-    if (doc === "settings") walk(data.nav, "nav", doc);
+    // A menu link leaves the page when its whole section is deleted.
+    if (doc === "settings") walk(data.nav, "nav", doc, true);
     else walk(data, doc, doc);
   }
-  return [...new Set(found.map(squash))].sort((a, b) => b.length - a.length);
+  const required = new Set(found.map(squash));
+  const all = [...new Set([...required, ...optional.map(squash)])].sort((a, b) => b.length - a.length);
+  return { all, required };
 }
 
 const get = async (url) => {
@@ -59,12 +67,11 @@ async function check() {
   const html = await (await get(page.href)).text();
   let text = squash(visibleText(html));
 
-  if (!text.includes(squash(DISCLAIMER))) problems.push("the independent-profile notice is missing");
-  for (const value of expectedStrings()) {
-    if (!text.includes(value)) problems.push(`missing text: "${value.slice(0, 60)}"`);
+  const { all, required } = expectedStrings();
+  for (const value of all) {
+    if (required.has(value) && !text.includes(value)) problems.push(`missing text: "${value.slice(0, 60)}"`);
     text = text.split(value).join("");
   }
-  if (squash(DISCLAIMER)) text = text.split(squash(DISCLAIMER)).join("");
   if (text.length > MAX_UNEXPECTED_CHARS) problems.push(`${text.length} characters of unexpected text: "${text.slice(0, 80)}"`);
 
   const scripts = [...html.matchAll(/<script\b([^>]*)>/gi)].map((m) => m[1].trim());

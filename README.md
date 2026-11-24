@@ -15,7 +15,7 @@ A one-page profile you can edit from the browser, without touching code.
 4. Press **Save draft**. A free AI proofreader points out likely spelling or grammar mistakes. Choose **Fix it and save**, **Edit and save** or **Save anyway**.
 5. Press **Publish** to send all changed sections live in one deployment. Drafts stay in the browser until then.
 
-Automatic checks run, and the changes go live about four minutes later. If a save fails the checks, the live site stays as it was and the owner gets an email. Every change is kept in GitHub history, and [SECURITY.md](SECURITY.md) explains how to roll back.
+Automatic checks run, and the changes go live about five minutes later. If a save fails the checks, the live site stays as it was and the owner gets an email. Every change is kept in GitHub history, and [SECURITY.md](SECURITY.md) explains how to roll back.
 
 ---
 
