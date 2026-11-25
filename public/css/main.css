@@ -305,7 +305,7 @@ a:hover { background-size: 100% 2px; color: var(--accent); }
 /* ---------- gallery ---------- */
 .gallery { row-gap: clamp(2rem, 4vw, 3.5rem); }
 .gallery .rail { grid-column: 1 / -1; }
-.gallery__intro { max-width: 60ch; color: var(--ink-soft); }
+.gallery__intro { grid-column: 1 / -1; max-width: 60ch; color: var(--ink-soft); }
 .g { grid-column: 1 / -1; position: relative; }
 .g img { width: 100%; object-fit: cover; background: var(--sand); }
 .g figcaption { font: italic 400 var(--step--1)/1.5 var(--f-small, var(--serif)); color: var(--ink-soft); margin-top: 0.6rem; max-width: 48ch; }

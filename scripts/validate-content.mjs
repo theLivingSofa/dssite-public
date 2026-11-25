@@ -87,7 +87,7 @@ docs.research?.books?.forEach((book, i) => needsSource(`research.books[${i}]`, b
 for (const key of ["firstName", "lastName"]) {
   if (!docs.hero?.[key]) fail(`hero.${key}`, "cannot be empty");
 }
-if ((docs.gallery?.items?.length ?? 0) > 7) fail("gallery.items", "the layout holds seven photos");
+if ((docs.gallery?.items?.length ?? 0) > 21) fail("gallery.items", "the gallery holds up to 21 photos");
 
 // Font choices are limited to safe names, because they end up in the page's attributes.
 const checkFontChoices = (node, where) => {

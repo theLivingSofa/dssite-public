@@ -190,9 +190,10 @@ export const collections: Collection[] = [
   ]),
   section("gallery", "08 Gallery", [
     ...sectionTitles,
+    longText("intro", "Introduction", "Optional. A short paragraph under the heading."),
     list(
       "items",
-      "Photos (the layout holds seven)",
+      "Photos (up to 21; the layout repeats every seven)",
       (i) => i?.caption?.slice(0, 48),
       [
         photo("image", "Photo"),
@@ -201,7 +202,7 @@ export const collections: Collection[] = [
         text("credit", "Credit"),
         keepShown("keepCredit", "Show this credit even when sources are hidden"),
       ],
-      7,
+      21,
     ),
   ]),
   section("contact", "09 Contact", [
