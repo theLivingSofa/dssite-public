@@ -48,6 +48,7 @@ Drafts stay in the editor's browser and are not sent anywhere until Publish. The
 - `edits` is where TinaCMS saves. It is the GitHub default branch because Tina writes uploaded photos to the default branch and cannot commit them to a protected one.
 - `production` is what Cloudflare deploys. It only accepts pull requests that pass the content check. Direct pushes, force pushes and deletion are blocked, and the rules apply to admins.
 - A save that passes is merged automatically. A save that fails stays off the live site and the owner is emailed.
+- Every deployment also has its own address, such as `abc12345.dssite-public.pages.dev`. `functions/_middleware.js` sends those addresses to the live site, so older versions cannot be read there. Deployments made before this rule still answer until they are deleted under **Deployments** in Cloudflare.
 - Cloudflare preview builds are off, because making them private needs Cloudflare Access. A save that fails the checks gets no public link on the site's hosting, though it remains visible in this public GitHub repo.
 
 **To turn human approval back on:** in GitHub, open **Settings > Branches**, edit the `production` rule, and require 1 approval. Then remove the "Publish a save" step from `.github/workflows/review.yml`.
