@@ -30,6 +30,19 @@ The big name has its own setting and never changes with the others. Choose **Sit
 
 **To add a new font:** open **11 Site settings and sharing**, go to **Uploaded fonts**, choose a WOFF2, TTF or OTF file, press **Upload font**, **Save draft**, then **Publish**. It appears in the Font menus about five minutes later, after you refresh the page. Only upload fonts you have the right to use.
 
+## Add something new
+
+Every list in the editor has a **+** button next to its name: papers, books, timeline entries, roles, contact rows, sources and gallery photos.
+
+1. Open the section, for example **05 Research and teaching**, and find the list, such as **Selected papers**.
+2. Press **+**. A new item appears at the end of the list. Click it and fill in its boxes.
+3. Drag the dots on its left to move it higher or lower.
+4. Press **Save draft**, then **Publish**.
+
+Papers, books, roles and table rows need a source link starting with https://. The editor won't save one without it.
+
+**Gallery photos:** press **+** next to **Photos**, upload the photo, then add a description, caption and credit. The gallery holds up to 21 photos, and its layout repeats every seven. **Introduction** adds an optional short paragraph under the gallery heading.
+
 ## Change a photo
 
 1. Click the photo.

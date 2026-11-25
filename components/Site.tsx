@@ -13,6 +13,8 @@ export const noField: FieldFn = () => undefined;
 type Editable = { field: FieldFn };
 type Link = { label?: string | null; url?: string | null; keepSource?: boolean | null } | null;
 
+// The gallery layout repeats every seven photos.
+export const MAX_GALLERY_PHOTOS = 21;
 const GALLERY_SLOTS = [
   { slot: "a", sizes: "(min-width: 900px) 62vw, 100vw", target: 800 },
   { slot: "b", sizes: "(min-width: 900px) 28vw, 100vw", target: 800 },
@@ -111,7 +113,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
     .map((ledger) => ({ ledger, rows: kept(ledger?.rows, "label", "text") }))
     .filter(({ ledger, rows }) => filled(ledger?.heading) || rows.length > 0);
   const roleRows = kept(roles.roles, "label", "text");
-  const photos = kept(gallery.items, "image", "caption").slice(0, GALLERY_SLOTS.length);
+  const photos = kept(gallery.items, "image", "caption").slice(0, MAX_GALLERY_PHOTOS);
   const columns = (contact.columns ?? [])
     .map((column) => ({ column, rows: kept(column?.rows, "label", "value") }))
     .filter(({ column, rows }) => filled(column?.heading) || rows.length > 0);
@@ -129,7 +131,7 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
       researchMain || notes.length > 0 || papers.length > 0 || books.length > 0,
     institute: filled(institute.heading) || ledgers.length > 0,
     roles: filled(roles.heading) || roleRows.length > 0,
-    gallery: filled(gallery.heading) || photos.length > 0,
+    gallery: filled(gallery.heading, gallery.intro) || photos.length > 0,
     contact: filled(contact.heading, contact.officialLabel) || columns.length > 0,
   };
   const numbers = Object.fromEntries(
@@ -380,9 +382,10 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
             <Rail number={numbers.gallery}>
               {filled(gallery.heading) && <h2 id="h-gallery" className="h2 reveal" {...f(gallery, "heading")}>{gallery.heading}</h2>}
             </Rail>
+            {filled(gallery.intro) && <p className="gallery__intro reveal" {...f(gallery, "intro")}>{gallery.intro}</p>}
 
             {photos.map((item, i) => {
-              const { slot, sizes, target } = GALLERY_SLOTS[i];
+              const { slot, sizes, target } = GALLERY_SLOTS[i % GALLERY_SLOTS.length];
               const credit = (showSources || Boolean(item.keepCredit)) && filled(item.credit);
               return (
                 <figure className={`g g--${slot} reveal`} key={i}>
