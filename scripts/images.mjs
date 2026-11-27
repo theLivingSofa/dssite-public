@@ -55,7 +55,7 @@ async function existingSet(value) {
     return match ? [{ width: Number(match[1]), url: `/assets/sizes/${file}` }] : [];
   });
   if (!smaller.length) return null;
-  const { width, height } = await sharp(main).metadata();
+  const { width, height } = await sharp(main, { limitInputPixels: 40_000_000 }).metadata();
   return { width, height, sizes: [...smaller, { width, url: value }].sort((a, b) => a.width - b.width) };
 }
 
@@ -68,7 +68,7 @@ async function generatedSet(value) {
   const bytes = readFileSync(file);
   const hash = createHash("sha256").update(bytes).digest("hex").slice(0, 10);
   const name = path.basename(value, path.extname(value)).replace(/[^a-z0-9-]+/gi, "-").toLowerCase();
-  const meta = await sharp(bytes).rotate().toBuffer({ resolveWithObject: true }).then((r) => r.info);
+  const meta = await sharp(bytes, { limitInputPixels: 40_000_000 }).rotate().toBuffer({ resolveWithObject: true }).then((r) => r.info);
   const widths = WIDTHS.filter((w) => w < meta.width);
   widths.push(Math.min(meta.width, 1600));
   mkdirSync(GENERATED, { recursive: true });
@@ -78,7 +78,7 @@ async function generatedSet(value) {
   for (const width of widths) {
     const output = path.join(GENERATED, `${name}-${hash}-${width}.webp`);
     if (!existsSync(output)) {
-      const { data, info } = await sharp(bytes)
+      const { data, info } = await sharp(bytes, { limitInputPixels: 40_000_000 })
         .rotate()
         .resize({ width, withoutEnlargement: true })
         .removeAlpha()

@@ -1,9 +1,9 @@
 // The content gate. Runs in every build and on every change to `edits`, and fails on
 // anything outside the schema. Uses only Node built-ins, so it needs no install step.
 // Usage: node scripts/validate-content.mjs [folder-to-check]
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
-import { IMAGE_EXTENSIONS, IMAGE_KEYS, MAX_IMAGE_BYTES, MAX_LIST_ITEMS, fieldError, httpsError } from "../lib/content-rules.mjs";
+import { IMAGE_EXTENSIONS, IMAGE_KEYS, MAX_IMAGE_BYTES, MAX_LIST_ITEMS, fieldError, httpsError, imageSizeError } from "../lib/content-rules.mjs";
 import { TINA_GRAPHQL_VERSION } from "../lib/tina-version.mjs";
 import { FONT_CHOICES, FONT_DEFAULT, FONT_EXTENSIONS, MAX_CUSTOM_FONTS, fontBytesError, fontFileError, fontNameError } from "../lib/fonts.mjs";
 
@@ -123,10 +123,17 @@ const SIGNATURES = {
   png: (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
   webp: (b) => b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP",
 };
+// lstat, not stat: a link could point at a file outside the media folder.
 const walk = (dir) =>
   readdirSync(dir).flatMap((name) => {
     const full = path.join(dir, name);
-    return statSync(full).isDirectory() ? walk(full) : [full];
+    const info = lstatSync(full);
+    if (info.isDirectory()) return walk(full);
+    if (!info.isFile()) {
+      fail(path.relative(ROOT, full), "links and special files are not allowed");
+      return [];
+    }
+    return [full];
   });
 for (const file of existsSync(MEDIA) ? walk(MEDIA) : []) {
   const where = path.relative(ROOT, file);
@@ -142,9 +149,12 @@ for (const file of existsSync(MEDIA) ? walk(MEDIA) : []) {
     continue;
   }
   if (!IMAGE_EXTENSIONS.includes(extension)) { fail(where, "only JPG, PNG and WebP files are allowed"); continue; }
-  if (statSync(file).size > MAX_IMAGE_BYTES) fail(where, "is larger than 8 MB");
+  if (statSync(file).size > MAX_IMAGE_BYTES) { fail(where, "is larger than 8 MB"); continue; }
+  const bytes = readFileSync(file);
   const check = SIGNATURES[extension === "jpeg" ? "jpg" : extension];
-  if (!check(readFileSync(file).subarray(0, 16))) fail(where, "file contents do not match its extension");
+  if (!check(bytes.subarray(0, 16))) { fail(where, "file contents do not match its extension"); continue; }
+  const sizeProblem = imageSizeError(bytes, extension);
+  if (sizeProblem) fail(where, sizeProblem);
 }
 
 // The proofreader checks logins against this version of TinaCloud's content API.

@@ -21,7 +21,8 @@ for (const page of ["index.html", "404.html", "404/index.html", "_not-found/inde
   const file = path.join(OUT, page);
   if (!existsSync(file)) continue;
   const html = strip(readFileSync(file, "utf8"));
-  if (/_next|__next_f/.test(html)) throw new Error(`finish-export: Next.js runtime is still in ${page}`);
+  // Real runtime leftovers only: editor text like "my_next" is fine.
+  if (/\/_next\/|self\.__next_f|__next_f\.push/.test(html)) throw new Error(`finish-export: Next.js runtime is still in ${page}`);
   writeFileSync(file, html);
   if (page === "index.html") size = html.length;
 }
