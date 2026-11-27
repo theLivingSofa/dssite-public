@@ -9,6 +9,7 @@
 
 /admin/*
   ! Access-Control-Allow-Origin
+  Access-Control-Allow-Origin: https://dssite-public.pages.dev
   ! Content-Security-Policy
   ! X-Frame-Options
   ! Cross-Origin-Opener-Policy
@@ -19,6 +20,7 @@
 
 /edit/*
   ! Access-Control-Allow-Origin
+  Access-Control-Allow-Origin: https://dssite-public.pages.dev
   ! Content-Security-Policy
   ! X-Frame-Options
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://assets.tina.io; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
