@@ -2,6 +2,7 @@ import type { Collection, TinaField } from "tinacms";
 import { IMAGE_EXTENSIONS, fieldError } from "../lib/content-rules.mjs";
 import { FONT_FIELDS, FONT_KINDS } from "../lib/fonts.mjs";
 import { CustomFontsField, TypographyField, fontField } from "./font-field";
+import { FocusPointField } from "./focus-field";
 import { proofreadBeforeSave } from "./proofread";
 
 // Every section is one JSON file in content/site. All of them render on one page,
@@ -197,6 +198,13 @@ export const collections: Collection[] = [
       (i) => i?.caption?.slice(0, 48),
       [
         photo("image", "Photo"),
+        {
+          type: "string",
+          name: "focus",
+          label: "Position in frame",
+          description: "Drag the photo to choose which part shows in its frame, and zoom in if needed.",
+          ui: { component: FocusPointField, validate: validate("focus") },
+        } as unknown as TinaField,
         text("alt", "Photo description", "Read aloud by screen readers. Describe what the photo shows."),
         longText("caption", "Caption"),
         text("credit", "Credit"),

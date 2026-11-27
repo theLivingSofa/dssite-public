@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from "react";
-import { safeHref } from "../lib/content-rules.mjs";
+import { focusPoint, safeHref } from "../lib/content-rules.mjs";
 import { fontChoice } from "../lib/fonts.mjs";
 import { responsive } from "../lib/images";
 import type { SiteQuery } from "../tina/__generated__/types";
@@ -13,6 +13,7 @@ export const noField: FieldFn = () => undefined;
 type Editable = { field: FieldFn };
 type Link = { label?: string | null; url?: string | null; keepSource?: boolean | null } | null;
 
+
 // The gallery layout repeats every seven photos.
 export const MAX_GALLERY_PHOTOS = 21;
 const GALLERY_SLOTS = [
@@ -24,6 +25,10 @@ const GALLERY_SLOTS = [
   { slot: "f", sizes: "(min-width: 900px) 62vw, 100vw", target: 1200 },
   { slot: "g", sizes: "(min-width: 900px) 28vw, 100vw", target: 800 },
 ];
+
+// A zoomed photo is shown larger than its frame, so the browser should pick a larger file.
+const zoomSizes = (sizes: string, zoom: number) =>
+  zoom === 1 ? sizes : sizes.replace(/(\d+)vw/g, (_, width: string) => `${Math.round(Number(width) * zoom)}vw`);
 
 // A deleted text is empty. Empty things are left out of the page, so the spacing closes up.
 const filled = (...values: unknown[]) => values.some((value) => (typeof value === "string" ? value.trim() !== "" : Boolean(value)));
@@ -387,19 +392,25 @@ export default function Site({ data, field }: { data: SiteQuery; field: FieldFn 
             {photos.map((item, i) => {
               const { slot, sizes, target } = GALLERY_SLOTS[i % GALLERY_SLOTS.length];
               const credit = (showSources || Boolean(item.keepCredit)) && filled(item.credit);
+              // The position and zoom set in the editor. A zoomed photo needs a sharper file.
+              const point = focusPoint(item.focus);
+              const zoom = point ? point.z / 100 : 1;
+              const placed = point ? ` fx-${point.x} fy-${point.y}${point.z > 100 ? ` z-${point.z}` : ""}` : "";
               return (
-                <figure className={`g g--${slot} reveal`} key={i}>
+                <figure className={`g g--${slot}${placed} reveal`} key={i}>
                   {filled(item.image) && (
                     <div className="frame">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        {...responsive(item.image, target)}
-                        sizes={sizes}
-                        loading="lazy"
-                        decoding="async"
-                        alt={item.alt ?? ""}
-                        {...f(item, "image")}
-                      />
+                      <div className="pan">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          {...responsive(item.image, Math.round(target * zoom))}
+                          sizes={zoomSizes(sizes, zoom)}
+                          loading="lazy"
+                          decoding="async"
+                          alt={item.alt ?? ""}
+                          {...f(item, "image")}
+                        />
+                      </div>
                     </div>
                   )}
                   {(filled(item.caption) || credit) && (

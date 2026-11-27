@@ -3,46 +3,92 @@
   "heading": "Gallery",
   "items": [
     {
-      "image": "/assets/img/pgp-orient.webp",
-      "alt": "Prof. Dheeraj Sharma speaking into a microphone, seated on a stage beside a guest. A table nameplate reads Prof. Dheeraj Sharma, Director, IIM Rohtak. A slide behind them reads PGP Batch 2023–25.",
-      "caption": "Prof. Dheeraj Sharma, Director, at the orientation for the PGP batch of 2023–25, 1–2 July 2023.",
-      "credit": "Photo: IIM Rohtak"
+      "image": "/assets/img/gallery/g20-manohar-lal.jpg",
+      "alt": "Prof. Dheeraj Sharma presents a framed memento to Shri Manohar Lal on a stage lit in purple, in front of a G20 India 2023 backdrop.",
+      "caption": "With Shri Manohar Lal at the institute's G20 conference, Preponderance of Indian Wisdom in a VUCA World, 2023.",
+      "credit": ""
     },
     {
-      "image": "/assets/img/library.webp",
-      "alt": "Four students in dark blazers reading and pulling books from tall grey shelves in the institute library.",
-      "caption": "Students in the library.",
-      "credit": "Photo: IIM Rohtak"
+      "image": "/assets/img/gallery/wmc-address.jpg",
+      "alt": "Prof. Dheeraj Sharma speaks at a lectern bearing the 46th World Management Congress 2025 poster.",
+      "caption": "Addressing the 46th World Management Congress, New Delhi, 2025.",
+      "credit": ""
     },
     {
-      "image": "/assets/img/convo-2026.webp",
-      "alt": "Three people in convocation robes stand on a stage with rows of graduates in black gowns and yellow stoles on either side, under a banner for the 15th Annual Convocation Ceremony.",
-      "caption": "The stage at the 15th Annual Convocation, April 2026.",
-      "credit": "Photo: IIM Rohtak"
+      "image": "/assets/img/gallery/g20-walk.jpg",
+      "focus": "75 20",
+      "alt": "Prof. Dheeraj Sharma walks along a red carpet beside Shri Manohar Lal, followed by officials.",
+      "caption": "Walking with Shri Manohar Lal at the G20 conference, 2023.",
+      "credit": ""
     },
     {
-      "image": "/assets/img/ipm-orient.webp",
-      "alt": "A man in a mustard waistcoat lights a brass oil lamp with a candle while five other men look on, in front of a slide for the IPM 2023–28 orientation.",
-      "caption": "A lamp is lit at the induction and orientation programme for the IPM batch of 2023–28, August 2023.",
-      "credit": "Photo: IIM Rohtak"
+      "image": "/assets/img/gallery/governor-dattatreya.jpg",
+      "focus": "5 55",
+      "alt": "Prof. Dheeraj Sharma presents a memento to Shri Bandaru Dattatreya, Governor of Haryana, on stage at IIM Rohtak.",
+      "caption": "Presenting a memento to Shri Bandaru Dattatreya, Governor of Haryana.",
+      "credit": ""
     },
     {
-      "image": "/assets/img/foundation.webp",
-      "alt": "Two men stand either side of a tall brass lamp during a Foundation Day event; one lights it.",
-      "caption": "Lamp-lighting at an IIM Rohtak Foundation Day event.",
-      "credit": "Photo: IIM Rohtak"
+      "image": "/assets/img/gallery/naval-chief.jpg",
+      "focus": "48 27 140",
+      "alt": "Prof. Dheeraj Sharma shakes hands with the Chief of the Naval Staff in white naval uniform, in front of the Indian Navy crest and flags.",
+      "caption": "With the Chief of the Naval Staff.",
+      "credit": ""
     },
     {
-      "image": "/assets/img/convo-2023.webp",
-      "alt": "Four dignitaries in maroon and gold robes stand in a row with four graduates holding certificates, in front of a banner for the 12th Annual Convocation.",
-      "caption": "The 12th Annual Convocation, 8 April 2023.",
-      "credit": "Photo: IIM Rohtak"
+      "image": "/assets/img/gallery/iiac-agreement.jpg",
+      "alt": "Prof. Dheeraj Sharma signs a document at a table marked IIAC and IIM Rohtak, beside a representative of the India International Arbitration Centre.",
+      "caption": "Signing an agreement with the India International Arbitration Centre, New Delhi, April 2023.",
+      "credit": ""
     },
     {
-      "image": "/assets/img/run-for-unity.webp",
-      "alt": "Two rows of runners in sportswear, some with race bibs and medals, hold certificates in front of a Run for Unity banner.",
-      "caption": "Participants with certificates at an IIM Rohtak Run for Unity event.",
-      "credit": "Photo: IIM Rohtak"
+      "image": "/assets/img/gallery/convocation-13.jpg",
+      "alt": "Prof. Dheeraj Sharma in convocation robes and cap speaks at the IIM Rohtak lectern at the 13th Annual Convocation.",
+      "caption": "Addressing the 13th Annual Convocation of IIM Rohtak.",
+      "credit": ""
+    },
+    {
+      "image": "/assets/img/gallery/international-agreement.jpg",
+      "alt": "Prof. Dheeraj Sharma and a guest in Omani dress hold up signed agreements, with colleagues and guests standing behind them.",
+      "caption": "Exchanging signed agreements with an international delegation.",
+      "credit": ""
+    },
+    {
+      "image": "/assets/img/gallery/agba-thailand.jpg",
+      "alt": "Prof. Dheeraj Sharma stands between two colleagues holding a certificate, in front of an Award Ceremony backdrop.",
+      "caption": "At the AGBA award ceremony in Thailand.",
+      "credit": ""
+    },
+    {
+      "image": "/assets/img/gallery/official-meeting.jpg",
+      "focus": "50 50",
+      "alt": "Prof. Dheeraj Sharma in conversation with a senior dignitary, both seated in white armchairs in front of Indian flags.",
+      "caption": "In conversation at an official meeting.",
+      "credit": ""
+    },
+    {
+      "image": "/assets/img/gallery/ipm-2026-induction.jpg",
+      "alt": "Prof. Dheeraj Sharma presents a certificate to a guest on stage at the induction and orientation programme for the 2026–31 batch.",
+      "caption": "At the induction and orientation programme for the IPM batch of 2026–31.",
+      "credit": ""
+    },
+    {
+      "image": "/assets/img/gallery/uttarakhand.jpg",
+      "alt": "Prof. Dheeraj Sharma presents a publication to a dignitary in front of a Devbhoomi Uttarakhand sign.",
+      "caption": "Presenting a publication during a visit to Uttarakhand.",
+      "credit": ""
+    },
+    {
+      "image": "/assets/img/gallery/governance-award.jpg",
+      "alt": "Prof. Dheeraj Sharma holds the Exemplary Governance Leadership Award certificate, surrounded by dignitaries on stage at the 46th World Management Congress.",
+      "caption": "Receiving the Exemplary Governance Leadership Award at the 46th World Management Congress, New Delhi.",
+      "credit": ""
+    },
+    {
+      "image": "/assets/img/gallery/welcome.jpg",
+      "alt": "Prof. Dheeraj Sharma smiles as he welcomes a guest with a large bouquet of flowers in his office.",
+      "caption": "Welcoming a guest at IIM Rohtak.",
+      "credit": ""
     }
   ]
 }

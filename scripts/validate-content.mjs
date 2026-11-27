@@ -27,7 +27,8 @@ function checkValue(field, value, where) {
     if (typeof value !== "boolean") fail(where, "must be true or false");
     return;
   }
-  if (field.options && value !== "" && !field.options.includes(value)) return fail(where, "is not one of the allowed options");
+  const allowed = field.options?.map((option) => (typeof option === "string" ? option : option?.value));
+  if (allowed && value !== "" && !allowed.includes(value)) return fail(where, "is not one of the allowed options");
   const error = fieldError(field.name, value);
   if (error) fail(where, error);
   if (IMAGE_KEYS.has(field.name) && !error && value && !existsSync(path.join(ROOT, "public", value))) {
