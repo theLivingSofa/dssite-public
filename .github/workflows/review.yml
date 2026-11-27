@@ -38,11 +38,16 @@ jobs:
       - name: Check the content
         env:
           HEAD_REF: ${{ github.head_ref || github.ref_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          THIS_REPO: ${{ github.repository }}
         run: |
-          if [ "$HEAD_REF" = "edits" ]; then
-            node trusted/scripts/validate-content.mjs candidate
-          else
+          # Only the owner's own code/ branches may bring a new version of the checker.
+          # Editor saves and pull requests from other people's copies use production's.
+          case "$HEAD_REF" in code/*) own_code=yes ;; *) own_code=no ;; esac
+          if [ "$own_code" = yes ] && [ "$HEAD_REPO" = "$THIS_REPO" ]; then
             node candidate/scripts/validate-content.mjs candidate
+          else
+            node trusted/scripts/validate-content.mjs candidate
           fi
       - name: Edits may only change content and photos
         if: ${{ (github.head_ref || github.ref_name) == 'edits' }}
