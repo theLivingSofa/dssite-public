@@ -36,16 +36,21 @@ const chosenSection = () => {
   }
 };
 
-export default function EditPreview(props: { data: SiteQuery; query: string; variables: Record<string, never> }) {
-  const { data } = useTina({ ...props, experimental___selectFormByFormId: chosenSection });
+// The page is built empty (see page.tsx). It shows the site once the editor has sent the content.
+const hasContent = (data: Partial<SiteQuery> | undefined): data is SiteQuery =>
+  Boolean(data) && [...SECTIONS].every((key) => Boolean((data as Record<string, unknown>)[key]));
+
+export default function EditPreview(props: { data: Partial<SiteQuery>; query: string; variables: Record<string, never> }) {
+  const { data } = useTina({ ...props, data: props.data as SiteQuery, experimental___selectFormByFormId: chosenSection });
+  const ready = hasContent(data);
 
   useEffect(() => {
     const nav = document.querySelector<HTMLDetailsElement>(".mast__nav");
     if (nav) nav.open = window.matchMedia("(min-width: 900px)").matches;
-  }, []);
+  }, [ready]);
 
   // Fonts chosen for a whole kind of text show in the preview before they are saved.
-  const typography = JSON.stringify(data.settings.typography ?? {});
+  const typography = JSON.stringify((ready && data.settings.typography) || {});
   useEffect(() => {
     const html = document.documentElement;
     const chosen = fontAttributes(JSON.parse(typography)) as Record<string, string>;
@@ -64,7 +69,13 @@ export default function EditPreview(props: { data: SiteQuery; query: string; var
           <feColorMatrix type="matrix" values={PRINT_TONE} />
         </filter>
       </svg>
-      <Site data={data} field={field} />
+      {ready ? (
+        <Site data={data} field={field} />
+      ) : (
+        <p style={{ margin: "20vh auto", maxWidth: "32ch", textAlign: "center", font: "400 16px/1.5 system-ui, sans-serif", color: "#5c5548" }}>
+          This is the editor&rsquo;s preview. The page appears here once you are logged in to the editor.
+        </p>
+      )}
     </>
   );
 }
