@@ -54,10 +54,14 @@ jobs:
         working-directory: candidate
         run: |
           git fetch --quiet "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" production
-          outside=$(git diff --name-only FETCH_HEAD...HEAD | grep -Ev '^(content/site/[^/]+\.json|public/assets/img/.+)$' || true)
-          if [ -n "$outside" ]; then
+          # Rename detection off: a moved file must show both its old and new path, so a
+          # protected file cannot be removed by "renaming" it into the photos folder.
+          outside=$(git -c diff.renames=false diff --no-renames --name-only FETCH_HEAD...HEAD | grep -Ev '^(content/site/[^/]+\.json|public/assets/img/.+)$' || true)
+          # Only plain files may be added or changed: no symlinks, submodules or executables.
+          badmode=$(git -c diff.renames=false diff --no-renames --raw -z FETCH_HEAD...HEAD | tr '\0' '\n' | awk '/^:/ { if ($2 !~ /^(000000|100644)$/) bad=1; getline; if (bad) print; bad=0 }')
+          if [ -n "$outside" ] || [ -n "$badmode" ]; then
             echo "These files cannot be changed from the edits branch:"
-            echo "$outside"
+            printf '%s\n' "$outside" "$badmode" | grep -v '^$'
             exit 1
           fi
 
