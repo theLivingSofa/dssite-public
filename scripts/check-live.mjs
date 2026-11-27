@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { IMAGE_KEYS, URL_KEYS } from "../lib/content-rules.mjs";
+import { IMAGE_KEYS, URL_KEYS, focusPoint } from "../lib/content-rules.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const base = process.env.LIVE_URL?.trim();
@@ -12,7 +12,7 @@ const RETRY_MS = 120_000;
 const MAX_UNEXPECTED_CHARS = 160;
 // Fixed words on the page that are not stored as content.
 const PAGE_TEXT = ["Skip to content"];
-const SKIP_KEYS = new Set([...URL_KEYS, ...IMAGE_KEYS, "href", "anchor", "railLabel", "datetime", "updatedDate", "alt", "portraitAlt", "shareImageAlt",
+const SKIP_KEYS = new Set([...URL_KEYS, ...IMAGE_KEYS, "href", "anchor", "railLabel", "focus", "datetime", "updatedDate", "alt", "portraitAlt", "shareImageAlt",
   "description", "shareDescription", "title", "siteName", "shareTitle", "person"]);
 const KEEP_IN = new Set(["timeline", "research"]);
 const SOURCE_KEYS = new Set(["sources", "sourcesLabel", "sourcesHeading", "sourceLabel", "sourcePrefix", "portraitCredit", "credit"]);
@@ -78,6 +78,13 @@ async function check() {
     text = text.split(value).join("");
   }
   for (const value of PAGE_TEXT) text = text.split(squash(value)).join("");
+  // A gallery photo's position is a setting, not text: it shows up as classes on its frame.
+  const gallery = JSON.parse(readFileSync(path.join(ROOT, "content/site/gallery.json"), "utf8"));
+  for (const item of gallery.items ?? []) {
+    const point = focusPoint(item.focus);
+    const classes = point && `fx-${point.x} fy-${point.y}${point.z > 100 ? ` z-${point.z}` : ""}`;
+    if (classes && !new RegExp(`class="g g--[a-g] ${classes} `).test(html)) problems.push(`photo position not applied: "${item.focus}"`);
+  }
   // Section numbers and punctuation are expected. Any leftover word means text was added.
   const words = text.replace(/[^\p{L}]/gu, "");
   if (words) problems.push(`unexpected words on the page: "${words.slice(0, 80)}"`);
